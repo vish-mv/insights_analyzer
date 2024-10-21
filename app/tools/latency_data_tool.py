@@ -7,12 +7,13 @@ def get_latency_data(api_id: str, customer_id: str, start_time: datetime, end_ti
     try:
         client = get_kusto_client()
         settings = get_settings()
+        organization_id = settings.ORGANIZATION_ID
 
         query = f"""
         let startTime = datetime({start_time.isoformat()});
         let endTime = datetime({end_time.isoformat()});
         analytics_target_response_summary
-        | where apiId == '{api_id}' and customerId == '{customer_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)
+        | where apiId == '{api_id}' and customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)
         | project AGG_WINDOW_START_TIME, apiId, customerId, responseLatencyMedian, backendLatencyMedian
         """
 
