@@ -7,6 +7,7 @@ def get_summary_data(api_id: str, start_time: datetime, end_time: datetime):
     try:
         client = get_kusto_client()
         settings = get_settings()
+        organization_id = settings.ORGANIZATION_ID
 
         query = f"""
         let startTime = datetime({start_time.isoformat()});
