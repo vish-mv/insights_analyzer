@@ -7,12 +7,13 @@ def get_error_data(api_id: str, start_time: datetime, end_time: datetime):
     try:
         client = get_kusto_client()
         settings = get_settings()
+        organization_id = settings.ORGANIZATION_ID
 
         query = f"""
         let startTime = datetime({start_time.isoformat()});
         let endTime = datetime({end_time.isoformat()});
         analytics_response_code_summary
-        | where apiId == '{api_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)
+        | where apiId == '{api_id}' and customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)
         | join kind=inner (
             analytics_proxy_error_summary
             | where AGG_WINDOW_START_TIME between (startTime .. endTime)
