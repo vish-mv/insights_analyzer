@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure Data Explorer Query Interface</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .result-container {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Azure Data Explorer Query Interface</h2>
+
+        <div class="mb-3">
+            <label for="database" class="form-label">Database:</label>
+            <input type="text" class="form-control" id="database" placeholder="Enter database name">
+        </div>
+
+        <div class="mb-3">
+            <label for="query" class="form-label">Query:</label>
+            <textarea class="form-control" id="query" rows="5" placeholder="Enter your Kusto query"></textarea>
+        </div>
+
+        <button class="btn btn-primary" onclick="executeQuery()">Execute Query</button>
+        <button class="btn btn-secondary" onclick="loadTables()">Show Tables</button>
+
+        <div class="mt-3">
+            <div id="loading" style="display: none;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+
+            <div id="executionInfo" class="alert alert-info mt-3" style="display: none;"></div>
+
+            <div class="result-container mt-3">
+                <div id="result"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function executeQuery() {
+            const query = document.getElementById('query').value;
+            const database = document.getElementById('database').value;
+
+            if (!query) {
+                alert('Please enter a query');
+                return;
+            }
+
+            $('#loading').show();
+            $('#result').empty();
+            $('#executionInfo').hide();
+
+            fetch('/api/query', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    query: query,
+                    database: database
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                $('#loading').hide();
+
+                // Show execution info
+                $('#executionInfo').html(
+                    `Executed in ${data.execution_time.toFixed(2)} seconds. Retrieved ${data.row_count} rows.`
+                ).show();
+
+                // Create table
+                if (data.data.length > 0) {
+                    const table = document.createElement('table');
+                    table.className = 'table table-striped table-bordered';
+
+                    // Add headers
+                    const thead = table.createTHead();
+                    const headerRow = thead.insertRow();
+                    data.columns.forEach(column => {
+                        const th = document.createElement('th');
+                        th.textContent = column;
+                        headerRow.appendChild(th);
+                    });
+
+                    // Add data
+                    const tbody = table.createTBody();
+                    data.data.forEach(row => {
+                        const tr = tbody.insertRow();
+                        data.columns.forEach(column => {
+                            const td = tr.insertCell();
+                            td.textContent = row[column];
+                        });
+                    });
+
+                    $('#result').append(table);
+                } else {
+                    $('#result').html('<div class="alert alert-warning">No results found</div>');
+                }
+            })
+            .catch(error => {
+                $('#loading').hide();
+                $('#result').html(`<div class="alert alert-danger">Error: ${error.message}</div>`);
+            });
+        }
+
+        function loadTables() {
+            const database = document.getElementById('database').value;
+
+            $('#loading').show();
+            $('#result').empty();
+            $('#executionInfo').hide();
+
+            fetch(`/api/tables?database=${database}`)
+            .then(response => response.json())
+            .then(data => {
+                $('#loading').hide();
+
+                const table = document.createElement('table');
+                table.className = 'table table-striped table-bordered';
+
+                // Add headers
+                const thead = table.createTHead();
+                const headerRow = thead.insertRow();
+                ['Table Name', 'Database'].forEach(header => {
+                    const th = document.createElement('th');
+                    th.textContent = header;
+                    headerRow.appendChild(th);
+                });
+
+                // Add data
+                const tbody = table.createTBody();
+                data.tables.forEach(table => {
+                    const tr = tbody.insertRow();
+                    tr.insertCell().textContent = table.TableName;
+                    tr.insertCell().textContent = table.DatabaseName;
+                });
+
+                $('#result').append(table);
+            })
+            .catch(error => {
+                $('#loading').hide();
+                $('#result').html(`<div class="alert alert-danger">Error: ${error.message}</div>`);
+            });
+        }
+    </script>
+</body>
+</html>
