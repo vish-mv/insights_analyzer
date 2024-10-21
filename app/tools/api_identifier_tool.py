@@ -6,6 +6,7 @@ def get_api_identifier_summary(organization_id: str):
     try:
         client = get_kusto_client()
         settings = get_settings()
+        organization_id = settings.ORGANIZATION_ID
 
         query = f"""
         analytics_response_code_summary
