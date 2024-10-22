@@ -44,7 +44,7 @@ def get_time_data(request: TimeRequest):
         # This depends on how the response is formatted
         start_time, end_time = response_content.split(',')
 
-        return {start_time,end_time}
+        return {"start_time": start_time, "end_time": end_time}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -3,6 +3,7 @@ from app.api.routes.tools import select_tools
 from app.tools import api_identifier_tool, error_data_tool, traffic_data_tool, summary_data_tool, latency_data_tool
 from openai import OpenAI
 from app.config import get_settings
+from app.tools.time_tool import get_time_data 
 
 router = APIRouter()
 
@@ -10,6 +11,10 @@ router = APIRouter()
 async def chat(user_query: str):
     try:
         # Step 1: Determine which tools to use
+        time_data = get_time_data(user_query)
+        start_time = time_data["start_time"]
+        end_time = time_data["end_time"]
+
         tools_response = await select_tools(user_query)
         selected_tools = tools_response["selected_tools"]
 
@@ -21,16 +26,16 @@ async def chat(user_query: str):
                 result = api_identifier_tool.get_api_identifier_summary("example_organization_id")
             elif tool == "Error Data Tool":
                 # Example execution, replace with actual parameters
-                result = error_data_tool.get_error_data("example_api_id", "2023-01-01", "2023-01-31")
+                result = error_data_tool.get_error_data("example_api_id", start_time, end_time)
             elif tool == "Traffic Data Tool":
                 # Example execution, replace with actual parameters
-                result = traffic_data_tool.get_traffic_data("example_api_id", "2023-01-01", "2023-01-31")
+                result = traffic_data_tool.get_traffic_data("example_api_id", start_time, end_time)
             elif tool == "Summary Data Tool":
                 # Example execution, replace with actual parameters
-                result = summary_data_tool.get_summary_data("example_api_id", "2023-01-01", "2023-01-31")
+                result = summary_data_tool.get_summary_data("example_api_id", start_time, end_time)
             elif tool == "Latency Data Tool":
                 # Example execution, replace with actual parameters
-                result = latency_data_tool.get_latency_data("example_api_id", "example_customer_id", "2023-01-01", "2023-01-31")
+                result = latency_data_tool.get_latency_data("example_api_id", "example_customer_id", start_time, end_time)
             else:
                 continue
 
