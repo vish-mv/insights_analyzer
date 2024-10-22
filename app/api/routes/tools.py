@@ -19,27 +19,31 @@ async def select_tools(request: ToolRequest):
     try:
         # Retrieve OpenAI API key from settings
         settings = get_settings()
-        client = OpenAI(api_key=settings.OPENAI_API_KEY)   # Set the API key
+        client = OpenAI(api_key=settings.OPENAI_API_KEY)  # Set the API key
 
         # Use the correct method to determine which tools to use
         response = client.chat.completions.create(
             model=settings.MODEL,
             messages=[
-                {{
+                {
                     "role": "system",
-                    "content": """You are a assistant that selects specific tools for grab data froma  database.
-                    You will be provided with descriptions of available tools and a query given by user.
-                    Your job is to find what are the tools that can be used to get relevant data for that specific query.
-                    You should only respond with a comma-separated list of tool names only. If There are no tools available
-                    for specific query you can return 'None' """
-                },{
+                    "content": """You are an assistant that selects specific tools to grab data from a database.
+                    You will be provided with descriptions of available tools and a query given by the user.
+                    Your job is to find what tools can be used to get relevant data for that specific query.
+                    You should only respond with a comma-separated list of tool names only. If there are no tools available
+                    for a specific query, you can return 'None'.
+                    Remember you should organize tools in the order they need to be used.
+                    And if the user mentioned a specific API name or ID, you should first call the API Identifier Tool."""
+                },
+                {
                     "role": "user",
                     "content": (
-                f"Given the user query: '{request.user_query}', "
-                f"which of the following tools should be used? {tool_details}. "
-                "Please respond with a comma-separated list of tool names only."
-            )}
-                }],
+                        f"Given the user query: '{request.user_query}', "
+                        f"which of the following tools should be used? {tool_details}. "
+                        "Please respond with a comma-separated list of tool names only."
+                    )
+                }
+            ],
             max_tokens=2000
         )
         
