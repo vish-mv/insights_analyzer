@@ -1,10 +1,5 @@
 [
     {
-        "name": "API Identifier Tool",
-        "description": "Fetches API identifier summary based on organization ID.",
-        "endpoint": "/api/tools/api_identifier"
-    },
-    {
         "name": "Error Data Tool",
         "description": "Retrieves error data for a given API ID and time frame.",
         "endpoint": "/api/tools/error_data"
