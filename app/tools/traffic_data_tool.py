@@ -8,11 +8,20 @@ def get_traffic_data(api_id: str, start_time: datetime, end_time: datetime):
         client = get_kusto_client()
         settings = get_settings()
 
+        # Construct the base query
         query = f"""
         let startTime = datetime({start_time.isoformat()});
         let endTime = datetime({end_time.isoformat()});
         analytics_response_code_summary
-        | where apiId == '{api_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)
+        """
+
+        # Add API ID condition if it's not None
+        if api_id is not None:
+            query += f"| where apiId == '{api_id}' and "
+        query += "| where AGG_WINDOW_START_TIME between (startTime .. endTime)"
+
+        # Continue constructing the query
+        query += """
         | summarize totalHits = sum(hitCount) by AGG_WINDOW_START_TIME, responseCode
         | project AGG_WINDOW_START_TIME, apiId, totalHits, responseCode
         """
