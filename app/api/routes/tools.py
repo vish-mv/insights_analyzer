@@ -25,15 +25,22 @@ async def select_tools(request: ToolRequest):
         response = client.chat.completions.create(
             model=settings.MODEL,
             messages=[
-                {
+                {{
+                    "role": "system",
+                    "content": """You are a assistant that selects specific tools for grab data froma  database.
+                    You will be provided with descriptions of available tools and a query given by user.
+                    Your job is to find what are the tools that can be used to get relevant data for that specific query.
+                    You should only respond with a comma-separated list of tool names only. If There are no tools available
+                    for specific query you can return 'None' """
+                },{
                     "role": "user",
                     "content": (
                 f"Given the user query: '{request.user_query}', "
                 f"which of the following tools should be used? {tool_details}. "
                 "Please respond with a comma-separated list of tool names only."
-            )
+            )}
                 }],
-            max_tokens=1000
+            max_tokens=2000
         )
         
         # Extract the content from the response
