@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI,Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -34,10 +34,10 @@ app.include_router(chat.router, prefix=settings.API_PREFIX)
 
 # Root endpoint serving the query interface
 @app.get("/", response_class=HTMLResponse)
-async def get_query_interface():
+async def get_query_interface(request: Request):  # Add request parameter
     return templates.TemplateResponse(
         "index.html",
-        {"request": None}  # Required by Jinja2
+        {"request": request}  # Pass the request object
     )
 
 if __name__ == "__main__":
