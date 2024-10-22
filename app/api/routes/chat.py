@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from app.api.routes.tools import select_tools
 from app.tools import api_identifier_tool, error_data_tool, traffic_data_tool, summary_data_tool, latency_data_tool
-import openai
+from openai import OpenAI
 from app.config import get_settings
 
 router = APIRouter()
@@ -38,12 +38,11 @@ async def chat(user_query: str):
 
         # Step 3: Use ChatGPT API to generate a response
         settings = get_settings()
-        openai.api_key = settings.OPENAI_API_KEY
-
-        response = openai.Completion.create(
-            engine="text-davinci-003",
-            prompt=f"User query: '{user_query}'. Data: {data}. Provide a response based on this information.",
-            max_tokens=150
+        client= OpenAI(settings.OPENAI_API_KEY)
+        response = client.chat.completions.create(
+            model=settings.MODEL,
+            messages=[{"role": "user", "content": f"User query: '{user_query}'. Data: {data}. Provide a response based on this information."}],
+            max_tokens=10000
         )
 
         chat_response = response.choices[0].text.strip()
