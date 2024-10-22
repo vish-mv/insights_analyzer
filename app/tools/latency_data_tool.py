@@ -3,17 +3,27 @@ from app.config import get_settings
 from fastapi import HTTPException
 from datetime import datetime
 
-def get_latency_data(api_id: str, customer_id: str, start_time: datetime, end_time: datetime):
+def get_latency_data(api_id: str, start_time: datetime, end_time: datetime):
     try:
         client = get_kusto_client()
         settings = get_settings()
         organization_id = settings.ORGANIZATION_ID
 
+        # Construct the base query
         query = f"""
         let startTime = datetime({start_time.isoformat()});
         let endTime = datetime({end_time.isoformat()});
         analytics_target_response_summary
-        | where apiId == '{api_id}' and customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)
+        """
+
+        # Add API ID condition if it's not None
+        if api_id is not None:
+            query += f"where apiId == '{api_id}' and "
+        
+        query += "| where customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)"
+
+        # Continue constructing the query
+        query += """
         | project AGG_WINDOW_START_TIME, apiId, customerId, responseLatencyMedian, backendLatencyMedian
         """
 
