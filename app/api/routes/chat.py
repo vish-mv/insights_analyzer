@@ -10,13 +10,14 @@ router = APIRouter()
 @router.post("/chat")
 async def chat(user_query: str):
     try:
+        settings = get_settings()
         # Step 1: Determine which tools to use
         time_data = get_time_data(user_query)
         start_time = time_data["start_time"]
         end_time = time_data["end_time"]
 
         # Step 2: Determine the API ID and name
-        api_summary = api_identifier_tool.get_api_identifier_summary("example_organization_id", user_query)
+        api_summary = api_identifier_tool.get_api_identifier_summary(settings.ORGANIZATION_ID, user_query)
         api_id = api_summary["apiId"]
         api_name = api_summary["apiName"]
 
@@ -40,14 +41,14 @@ async def chat(user_query: str):
                 result = summary_data_tool.get_summary_data(api_id, start_time, end_time)
             elif tool == "Latency Data Tool":
                 # Example execution, replace with actual parameters
-                result = latency_data_tool.get_latency_data(api_id, "example_customer_id", start_time, end_time)
+                result = latency_data_tool.get_latency_data(api_id, start_time, end_time)
             else:
                 continue
 
             data.append(result)
 
         # Step 3: Use ChatGPT API to generate a response
-        settings = get_settings()
+        
         client = OpenAI(api_key=settings.OPENAI_API_KEY)
         response = client.chat.completions.create(
             model=settings.MODEL,

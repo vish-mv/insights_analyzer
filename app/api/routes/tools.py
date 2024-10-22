@@ -33,7 +33,7 @@ async def select_tools(request: ToolRequest):
                     You should only respond with a comma-separated list of tool names only. If there are no tools available
                     for a specific query, you can return 'None'.
                     Remember you should organize tools in the order they need to be used.
-                    And if the user mentioned a specific API name or ID, you should first call the API Identifier Tool."""
+                    """
                 },
                 {
                     "role": "user",
