@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     # Organization ID
     ORGANIZATION_ID: str
 
+    #Model Name
+    MODEL: str
+
     class Config:
         env_file = ".env"
 
