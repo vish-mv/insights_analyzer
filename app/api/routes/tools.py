@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-import openai
+from openai import OpenAI
 import json
 from app.config import get_settings
 
@@ -14,15 +14,14 @@ async def select_tools(user_query: str):
     try:
         # Retrieve OpenAI API key from settings
         settings = get_settings()
-        openai.api_key = settings.OPENAI_API_KEY
+        client = OpenAI(settings.OPENAI_API_KEY)
 
         # Use ChatGPT API to determine which tools to use
-        response = openai.Completion.create(
-            engine="text-davinci-003",
-            prompt=f"Given the user query: '{user_query}', which of the following tools should be used? {tool_details}",
-            max_tokens=150
+        response = client.chat.completions.create(
+            model=settings.MODEL,
+            messages=[{"role": "user", "content": f"Given the user query: '{user_query}', which of the following tools should be used? {tool_details}"}],
+            max_tokens=1000
         )
-
         selected_tools = response.choices[0].text.strip()
         return {"selected_tools": selected_tools}
 
