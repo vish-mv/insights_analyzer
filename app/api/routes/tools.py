@@ -3,6 +3,10 @@ from openai import OpenAI
 import json
 from app.config import get_settings
 from pydantic import BaseModel
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 router = APIRouter()
 
@@ -10,18 +14,19 @@ router = APIRouter()
 with open("app/tools/tool_details.json", "r") as file:
     tool_details = json.load(file)
 
-# Define a Pydantic model for the request body
 class ToolRequest(BaseModel):
     user_query: str
 
 @router.post("/tools")
 async def select_tools(request: ToolRequest):
     try:
-        # Retrieve OpenAI API key from settings
-        settings = get_settings()
-        client = OpenAI(api_key=settings.OPENAI_API_KEY)  # Set the API key
+        logging.info("Starting select_tools function")
+        logging.info(f"User query: {request.user_query}")
 
-        # Use the correct method to determine which tools to use
+        settings = get_settings()
+        client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        logging.info("Initialized OpenAI client")
+
         response = client.chat.completions.create(
             model=settings.MODEL,
             messages=[
@@ -46,14 +51,16 @@ async def select_tools(request: ToolRequest):
             ],
             max_tokens=2000
         )
-        
-        # Extract the content from the response
-        response_content = response.choices[0].message.content.strip()
+        logging.info("Received response from OpenAI")
 
-        # Parse the response as a comma-separated list of tool names
+        response_content = response.choices[0].message.content.strip()
+        logging.info(f"Response content: {response_content}")
+
         tool_names = [tool.strip() for tool in response_content.split(',')]
+        logging.info(f"Selected tools: {tool_names}")
 
         return {"selected_tools": tool_names}
 
     except Exception as e:
+        logging.error(f"An error occurred in select_tools: {e}")
         raise HTTPException(status_code=500, detail=str(e))
