@@ -9,24 +9,26 @@ def get_summary_data(api_id: str, start_time: datetime, end_time: datetime):
         settings = get_settings()
         organization_id = settings.ORGANIZATION_ID
 
+        # Construct the base query
         query = f"""
         let startTime = datetime({start_time.isoformat()});
         let endTime = datetime({end_time.isoformat()});
-        
-        let trafficData = 
-            analytics_response_code_summary
-            | where apiId == '{api_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)
-            | summarize totalHits = sum(hitCount), errorHits = sumif(hitCount, responseCode >= 400) by apiId;
-        
-        let latencyData = 
-            analytics_target_response_summary
-            | where apiId == '{api_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)
-            | summarize totalLatency = sum(responseLatencyMedian + backendLatencyMedian) by apiId;
-        
-        trafficData
-        | join kind=inner (latencyData) on apiId
-        | project apiId, totalHits, errorHits, totalLatency
         """
+
+        # Add traffic data query
+        query += "let trafficData = analytics_response_code_summary | "
+        if api_id is not None:
+            query += f"where apiId == '{api_id}' and "
+        query += "AGG_WINDOW_START_TIME between (startTime .. endTime) | summarize totalHits = sum(hitCount), errorHits = sumif(hitCount, responseCode >= 400) by apiId;"
+
+        # Add latency data query
+        query += "let latencyData = analytics_target_response_summary | "
+        if api_id is not None:
+            query += f"where apiId == '{api_id}' and "
+        query += "AGG_WINDOW_START_TIME between (startTime .. endTime) | summarize totalLatency = sum(responseLatencyMedian + backendLatencyMedian) by apiId;"
+
+        # Final query
+        query += "trafficData | join kind=inner (latencyData) on apiId | project apiId, totalHits, errorHits, totalLatency"
 
         response = client.execute(settings.KUSTO_DATABASE_NAME, query)
         results = response.primary_results[0]
