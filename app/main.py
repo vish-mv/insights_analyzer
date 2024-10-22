@@ -7,6 +7,8 @@ from pathlib import Path
 
 from app.config import get_settings
 from app.api.routes import query
+from app.api.routes import tools
+from app.api.routes import chat
 
 # Initialize FastAPI app
 settings = get_settings()
@@ -26,6 +28,9 @@ templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
 # Include routers
 app.include_router(query.router, prefix=settings.API_PREFIX)
+app.include_router(tools.router, prefix=settings.API_PREFIX)
+app.include_router(chat.router, prefix=settings.API_PREFIX)
+
 
 # Root endpoint serving the query interface
 @app.get("/", response_class=HTMLResponse)
