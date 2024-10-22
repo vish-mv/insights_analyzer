@@ -9,11 +9,20 @@ def get_error_data(api_id: str, start_time: datetime, end_time: datetime):
         settings = get_settings()
         organization_id = settings.ORGANIZATION_ID
 
+        # Construct the base query
         query = f"""
         let startTime = datetime({start_time.isoformat()});
         let endTime = datetime({end_time.isoformat()});
         analytics_response_code_summary
-        | where apiId == '{api_id}' and customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)
+        """
+
+        # Add API ID condition if it's not None
+        if api_id is not None:
+            query += f"| where apiId == '{api_id}' and "
+        query += "| where customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)"
+
+        # Continue constructing the query
+        query += """
         | join kind=inner (
             analytics_proxy_error_summary
             | where AGG_WINDOW_START_TIME between (startTime .. endTime)
@@ -28,7 +37,7 @@ def get_error_data(api_id: str, start_time: datetime, end_time: datetime):
         for row in results:
             data.append({
                 "AGG_WINDOW_START_TIME": row["AGG_WINDOW_START_TIME"],
-                "apiId": row["apiId"],
+                "apiId": api_id,
                 "hitCount": row["hitCount"],
                 "responseCode": row["responseCode"],
                 "errorType": row["errorType"],
