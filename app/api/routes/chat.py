@@ -38,14 +38,14 @@ async def chat(user_query: str):
 
         # Step 3: Use ChatGPT API to generate a response
         settings = get_settings()
-        client= OpenAI(settings.OPENAI_API_KEY)
+        client = OpenAI(api_key=settings.OPENAI_API_KEY)
         response = client.chat.completions.create(
             model=settings.MODEL,
             messages=[{"role": "user", "content": f"User query: '{user_query}'. Data: {data}. Provide a response based on this information."}],
             max_tokens=10000
         )
 
-        chat_response = response.choices[0].text.strip()
+        chat_response = response.choices[0].message.content
         return {"response": chat_response}
 
     except Exception as e:
