@@ -15,10 +15,15 @@ async def chat(user_query: str):
         start_time = time_data["start_time"]
         end_time = time_data["end_time"]
 
+        # Step 2: Determine the API ID and name
+        api_summary = api_identifier_tool.get_api_identifier_summary("example_organization_id", user_query)
+        api_id = api_summary["apiId"]
+        api_name = api_summary["apiName"]
+
         tools_response = await select_tools(user_query)
         selected_tools = tools_response["selected_tools"]
 
-        # Step 2: Execute the selected tools
+        # Step 3: Execute the selected tools
         data = []
         for tool in selected_tools:
             if tool == "API Identifier Tool":
@@ -26,16 +31,16 @@ async def chat(user_query: str):
                 result = api_identifier_tool.get_api_identifier_summary("example_organization_id")
             elif tool == "Error Data Tool":
                 # Example execution, replace with actual parameters
-                result = error_data_tool.get_error_data("example_api_id", start_time, end_time)
+                result = error_data_tool.get_error_data(api_id, start_time, end_time)
             elif tool == "Traffic Data Tool":
                 # Example execution, replace with actual parameters
-                result = traffic_data_tool.get_traffic_data("example_api_id", start_time, end_time)
+                result = traffic_data_tool.get_traffic_data(api_id, start_time, end_time)
             elif tool == "Summary Data Tool":
                 # Example execution, replace with actual parameters
-                result = summary_data_tool.get_summary_data("example_api_id", start_time, end_time)
+                result = summary_data_tool.get_summary_data(api_id, start_time, end_time)
             elif tool == "Latency Data Tool":
                 # Example execution, replace with actual parameters
-                result = latency_data_tool.get_latency_data("example_api_id", "example_customer_id", start_time, end_time)
+                result = latency_data_tool.get_latency_data(api_id, "example_customer_id", start_time, end_time)
             else:
                 continue
 
