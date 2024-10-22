@@ -18,7 +18,7 @@ def get_error_data(api_id: str, start_time: datetime, end_time: datetime):
             analytics_proxy_error_summary
             | where AGG_WINDOW_START_TIME between (startTime .. endTime)
         ) on AGG_WINDOW_START_TIME
-        | project AGG_WINDOW_START_TIME, apiId, hitCount, responseCode, errorType, errorCode
+        | project AGG_WINDOW_START_TIME, apiId, hitCount, errorType, errorCode
         """
 
         response = client.execute(settings.KUSTO_DATABASE_NAME, query)
