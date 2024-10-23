@@ -24,9 +24,12 @@ def get_error_data(api_id: str, start_time: datetime, end_time: datetime):
         logging.info(f"Constructed query: {query}")
 
         # Add API ID condition if it's not None
-        if api_id is not None:
+        if api_id != 'NoData':
             query += f"| where apiId == '{api_id}' and "
-        query += "| where customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)"
+        else:
+            query+="|"
+        
+        query += f"where customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)"
         query += """
         | join kind=inner (
             analytics_proxy_error_summary
