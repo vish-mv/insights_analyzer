@@ -60,7 +60,17 @@ async def chat(request: ChatRequest):
         client = OpenAI(api_key=settings.OPENAI_API_KEY)
         response = client.chat.completions.create(
             model=settings.MODEL,
-            messages=[{"role": "user", "content": f"User query: '{user_query}'. Data: {data}. Provide a response based on this information."}],
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant that provides detailed and clear summaries based on the user's query and the data provided. Focus on presenting the information in a human-readable way, summarizing key insights like total API requests, success rates, and error percentages. If the data is incomplete or doesn't fully address the user's request, politely mention that specific information is missing."
+                },
+                {
+                    "role": "user",
+                    "content": f"User query: '{user_query}'. Based on the provided data: {data}, summarize the total API requests made over the last two weeks. Include the number of successful responses, errors, and their percentages. Present the information in a concise and clear format."
+                }
+            ]
+            ,
             max_tokens=10000
         )
 
