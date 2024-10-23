@@ -47,7 +47,7 @@ def get_api_identifier_summary(organization_id: str, user_query: str):
                     "content": (
                         f"Given the user query: '{user_query}', "
                         f"which of the following APIs is the most relevant? {apis}. "
-                        "Please respond with the most matching API and API ID, or 'None' for both if no API is relevant."
+                        "Please respond with the most matching API and API ID, or 'NoData' for both if no API is relevant."
                         "Response should be two apiName,apiId only. (Example Response: Book list api,335263522733)"
                     )
                 }
