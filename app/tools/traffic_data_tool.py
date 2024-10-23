@@ -12,6 +12,7 @@ def get_traffic_data(api_id: str, start_time: datetime, end_time: datetime):
         logging.info("Starting get_traffic_data function")
         client = get_kusto_client()
         settings = get_settings()
+        organization_id = settings.ORGANIZATION_ID
         logging.info("Retrieved settings and Kusto client")
 
         # Construct the base query
@@ -20,15 +21,19 @@ def get_traffic_data(api_id: str, start_time: datetime, end_time: datetime):
         let endTime = datetime({end_time});
         analytics_response_code_summary
         """
-        logging.info(f"Constructed query: {query}")
+        logging.info(f"Constructed base query: {query}")
 
-        # Add API ID condition if it's not None
-        if api_id is not None:
+        # Add API ID condition if it's not 'NoData'
+        if api_id != 'NoData':
             query += f"| where apiId == '{api_id}' and "
-        query += "| where AGG_WINDOW_START_TIME between (startTime .. endTime)"
+        else:
+            query+="|"
+        
+        # Always include the customerId condition
+        query += f"where customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)"
         query += """
-        | summarize totalHits = sum(hitCount) by AGG_WINDOW_START_TIME, responseCode
-        | project AGG_WINDOW_START_TIME, apiId, totalHits, responseCode
+        | summarize totalHits = sum(hitCount) by AGG_WINDOW_START_TIME, proxyResponseCode
+        | project AGG_WINDOW_START_TIME, totalHits, proxyResponseCode
         """
         logging.info(f"Final query: {query}")
 
@@ -42,7 +47,7 @@ def get_traffic_data(api_id: str, start_time: datetime, end_time: datetime):
                 "AGG_WINDOW_START_TIME": row["AGG_WINDOW_START_TIME"],
                 "apiId": api_id,
                 "totalHits": row["totalHits"],
-                "responseCode": row["responseCode"]
+                "proxyResponseCode": row["proxyResponseCode"]
             })
         logging.info(f"Extracted data: {data}")
 
