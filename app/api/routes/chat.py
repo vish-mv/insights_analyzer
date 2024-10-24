@@ -34,6 +34,8 @@ async def chat(request: ChatRequest):
         api_name = api_summary["apiName"]
         logging.info(f"Identified API - ID: {api_id}, Name: {api_name}")
 
+        summery_result = summary_data_tool.get_summary_data(api_id, start_time, end_time)
+
         tools_response = await select_tools(ToolRequest(user_query=user_query))
         selected_tools = tools_response["selected_tools"]
         logging.info(f"Selected tools: {selected_tools}")
@@ -44,9 +46,7 @@ async def chat(request: ChatRequest):
             if tool == "Error Data Tool":
                 result = error_data_tool.get_error_data(api_id, start_time, end_time)
             elif tool == "Traffic Data Tool":
-                result = traffic_data_tool.get_traffic_data(api_id, start_time, end_time)
-            elif tool == "Summary Data Tool":
-                result = summary_data_tool.get_summary_data(api_id, start_time, end_time)
+                result = traffic_data_tool.get_traffic_data(api_id, start_time, end_time)                
             elif tool == "Latency Data Tool":
                 result = latency_data_tool.get_latency_data(api_id, start_time, end_time)
             else:
@@ -63,11 +63,17 @@ async def chat(request: ChatRequest):
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a helpful assistant that provides detailed and clear summaries based on the user's query and the data provided. Focus on presenting the information in a human-readable way, summarizing key insights like total API requests, success rates, and error percentages. If the data is incomplete or doesn't fully address the user's request, politely mention that specific information is missing."
+                    "content": """You are a helpful assistant that provides detailed and clear summaries based 
+                    on the user's query and the data provided. Users can ask about traffic, latency, errors, or 
+                    any combination of these metrics. The user can choose to use this summary for broader context or focus on the 
+                    specific metrics they are interested in.In your responses, present key insights such as total API requests, 
+                    success rates, and error percentages if user asked. If the data is incomplete or missing, politely mention that specific 
+                    information is not available, so the user is aware of any gaps. Always you will be provided with a summary of all three metrics (traffic, latency, errors) 
+                    within the selected timeframe. If neede you can use it otherwise ignore it"""
                 },
                 {
                     "role": "user",
-                    "content": f"User query: '{user_query}'. Based on the provided data: {data}, summarize the total API requests made over the last two weeks. Include the number of successful responses, errors, and their percentages. Present the information in a concise and clear format."
+                    "content": f"User query: '{user_query}'. Based on the provided data: {data}. Summery of all data:{summery_result} Always try to inlcude required summery of informations and precentages. Present the information in a concise and clear format.Try to be descriptive"
                 }
             ]
             ,
