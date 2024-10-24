@@ -27,9 +27,9 @@ def get_error_data(api_id: str, start_time: datetime, end_time: datetime):
         if api_id != 'NoData':
             query += f"| where apiId == '{api_id}' and "
         else:
-            query+="|"
+            query+="|where"
         
-        query += f"where customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)"
+        query += f" customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)"
         query += """
         | join kind=inner (
             analytics_proxy_error_summary
