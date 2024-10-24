@@ -24,10 +24,12 @@ def get_latency_data(api_id: str, start_time: datetime, end_time: datetime):
         logging.info(f"Constructed query: {query}")
 
         # Add API ID condition if it's not None
-        if api_id is not None:
-            query += f"where apiId == '{api_id}' and "
+        if api_id != 'NoData':
+            query += f"| where apiId == '{api_id}' and "
+        else:
+            query+="|where"
         
-        query += "| where customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)"
+        query += f" customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)"
         query += """
         | project AGG_WINDOW_START_TIME, apiId, customerId, responseLatencyMedian, backendLatencyMedian
         """
