@@ -27,10 +27,10 @@ def get_traffic_data(api_id: str, start_time: datetime, end_time: datetime):
         if api_id != 'NoData':
             query += f"| where apiId == '{api_id}' and "
         else:
-            query+="|"
+            query+="|where"
         
         # Always include the customerId condition
-        query += f"where customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)"
+        query += f" customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)"
         query += """
         | summarize totalHits = sum(hitCount) by AGG_WINDOW_START_TIME, proxyResponseCode
         | project AGG_WINDOW_START_TIME, totalHits, proxyResponseCode
