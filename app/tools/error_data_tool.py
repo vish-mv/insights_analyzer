@@ -49,7 +49,6 @@ def get_error_data(api_id: str, start_time: datetime, end_time: datetime):
                 "AGG_WINDOW_START_TIME": row["AGG_WINDOW_START_TIME"],
                 "apiId": api_id,
                 "hitCount": row["hitCount"],
-                "responseCode": row["responseCode"],
                 "errorType": row["errorType"],
                 "errorCode": row["errorCode"]
             })
