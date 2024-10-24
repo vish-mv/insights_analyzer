@@ -19,23 +19,46 @@ def get_summary_data(api_id: str, start_time: datetime, end_time: datetime):
         query = f"""
         let startTime = datetime({start_time});
         let endTime = datetime({end_time});
+        
+        let trafficData = analytics_response_code_summary
+        | where customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)
         """
-        logging.info(f"Constructed base query: {query}")
-
-        # Add traffic data query
-        query += "let trafficData = analytics_response_code_summary | "
-        if api_id is not None:
-            query += f"where apiId == '{api_id}' and "
-        query += "AGG_WINDOW_START_TIME between (startTime .. endTime) | summarize totalHits = sum(hitCount), errorHits = sumif(hitCount, responseCode >= 400) by apiId;"
-
-        # Add latency data query
-        query += "let latencyData = analytics_target_response_summary | "
-        if api_id is not None:
-            query += f"where apiId == '{api_id}' and "
-        query += "AGG_WINDOW_START_TIME between (startTime .. endTime) | summarize totalLatency = sum(responseLatencyMedian + backendLatencyMedian) by apiId;"
-
-        # Final query
-        query += "trafficData | join kind=inner (latencyData) on apiId | project apiId, totalHits, errorHits, totalLatency"
+        
+        # Add API ID condition if it's not 'NoData'
+        if api_id != 'NoData':
+            query += f" and apiId == '{api_id}'"
+        
+        query += f"""
+        | summarize totalHits = sum(hitCount) by apiId;
+        
+        let errorData = analytics_proxy_error_summary
+        | where customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)
+        """
+        
+        # Add API ID condition if it's not 'NoData'
+        if api_id != 'NoData':
+            query += f" and apiId == '{api_id}'"
+        
+        query += f"""
+        | summarize errorHits = sum(hitCount) by apiId;
+        
+        let latencyData = analytics_target_response_summary
+        | where customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)
+        """
+        
+        # Add API ID condition if it's not 'NoData'
+        if api_id != 'NoData':
+            query += f" and apiId == '{api_id}'"
+        
+        query += """
+        | summarize totalLatency = sum(responseLatencyMedian + backendLatencyMedian) by apiId;
+        
+        trafficData
+        | join kind=inner (errorData) on apiId
+        | join kind=inner (latencyData) on apiId
+        | project apiId, totalHits, errorHits, totalLatency
+        """
+        
         logging.info(f"Final query: {query}")
 
         response = client.execute(settings.KUSTO_DATABASE_NAME, query)
