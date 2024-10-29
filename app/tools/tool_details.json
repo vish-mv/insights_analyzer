@@ -10,11 +10,6 @@
         "endpoint": "/api/tools/traffic_data"
     },
     {
-        "name": "Summary Data Tool",
-        "description": "Provides a summary of traffic, latency, and error data.",
-        "endpoint": "/api/tools/summary_data"
-    },
-    {
         "name": "Latency Data Tool",
         "description": "Retrieves full latency data for a given API ID and customer ID.",
         "endpoint": "/api/tools/latency_data"
