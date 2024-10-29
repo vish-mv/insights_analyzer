@@ -1,0 +1,22 @@
+[
+    [
+        {
+            "AGG_WINDOW_START_TIME": "2024-10-10T08:41:30+00:00", 
+            "apiId": "28hwbbbi42ef2r", 
+            "totalHits": 2, 
+            "proxyResponseCode": "404"
+        }, 
+        {
+            "AGG_WINDOW_START_TIME": "2024-10-10T08:41:10+00:00", 
+            "apiId": "28hwbbbi42ef2r", 
+            "totalHits": 1, 
+            "proxyResponseCode": "200"
+        },
+        {
+            "AGG_WINDOW_START_TIME": "2024-10-10T08:41:10+00:00", 
+            "apiId": "13242422474744", 
+            "totalHits": 1, 
+            "proxyResponseCode": "305"
+        }
+    ]
+]
