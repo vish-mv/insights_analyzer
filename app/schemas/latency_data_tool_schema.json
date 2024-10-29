@@ -1,0 +1,19 @@
+[
+    [
+        {
+            "AGG_WINDOW_START_TIME": "2024-10-08T09:08:40+00:00",
+            "apiId": "6704d0239db1d56c34fa68a4",
+            "customerId": "92f0ae1a-d339-4331-9de8-74ec457d5388",
+            "responseLatencyMedian": 11012.0,
+            "backendLatencyMedian": 11011.0
+        }, 
+        {
+            "AGG_WINDOW_START_TIME": "2024-10-08T09:08:40+00:00",
+            "apiId": "6704d0239db1sff4fcfa68a4",
+            "customerId": "92f0ae1a-d339-4331-9de8-74ec457d5388",
+            "responseLatencyMedian": 5.0,
+            "backendLatencyMedian": 8.2
+        }
+
+    ]
+]
