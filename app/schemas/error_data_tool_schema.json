@@ -1,0 +1,18 @@
+[
+    [
+        {
+            "AGG_WINDOW_START_TIME": "2024-10-08 10:05:30+00:00",
+            "apiId": "6704d0239db1d56c34fa68a4",
+            "hitCount": 1,
+            "errorType": "TARGET_CONNECTIVITY",
+            "errorCode": "101503"
+        },
+        {
+            "AGG_WINDOW_START_TIME": "2024-10-08 06:44:00+00:00",
+            "apiId": "6704d0239db1d56c34fa68a4",
+            "hitCount": 1,
+            "errorType": "AUTH",
+            "errorCode": "900901"
+        }
+    ]
+]
