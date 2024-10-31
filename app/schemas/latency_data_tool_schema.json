@@ -1,19 +1,18 @@
 [
     [
-        {
-            "AGG_WINDOW_START_TIME": "2024-10-08T09:08:40+00:00",
-            "apiId": "6704d0239db1d56c34fa68a4",
-            "customerId": "92f0ae1a-d339-4331-9de8-74ec457d5388",
-            "responseLatencyMedian": 11012.0,
-            "backendLatencyMedian": 11011.0
-        }, 
-        {
-            "AGG_WINDOW_START_TIME": "2024-10-08T09:08:40+00:00",
-            "apiId": "6704d0239db1sff4fcfa68a4",
-            "customerId": "92f0ae1a-d339-4331-9de8-74ec457d5388",
-            "responseLatencyMedian": 5.0,
-            "backendLatencyMedian": 8.2
+        {"AGG_WINDOW_START_TIME": "2024-10-10T08:41:30+00:00",
+         "apiId": "6704d0239db1d56c34fa68a4", 
+         "customerId": "92f0ae1a-d309-4ef1-9de8-74ec457d5b88", 
+         "responseLatencyMedian": 2.0,
+         "backendLatencyMedian": 2.0,
+         "deploymentId": "8c6d2f7d-fbd1-43d6-8fcc-2498c3c1wfwerw"
+         }, 
+         {"AGG_WINDOW_START_TIME": "2024-10-10T08:41:10+00:00",
+          "apiId": "6704d0239db1d56c34fa68a4",
+          "customerId": "92f0ae1a-d309-4ef1-9de8-74ec457d5b88",
+          "responseLatencyMedian": 3.0,
+          "backendLatencyMedian": 1.0,
+          "deploymentId": "4rfrwffwfw-fbd1-43d6-8fcc-2498c3c1wfwerw"
         }
-
     ]
 ]
