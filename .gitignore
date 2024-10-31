@@ -16,3 +16,7 @@ venv/
 
 # Logs
 *.log
+
+#runtime files
+analyze_data.py
+chart.png
