@@ -16,11 +16,15 @@ class Settings(BaseSettings):
     # OpenAI API Key
     OPENAI_API_KEY: str
 
+    # Anthropic Api key
+    ANTHROPIC_API_KEY: str
+
     # Organization ID
     ORGANIZATION_ID: str
 
-    #Model Name
-    MODEL: str
+    #Models Name
+    OPEN_AI_MODEL: str
+    ANTHROPIC_MODEL: str
 
     class Config:
         env_file = ".env"
