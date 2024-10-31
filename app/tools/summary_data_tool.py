@@ -64,8 +64,11 @@ def get_summary_data(api_id: str, start_time: datetime, end_time: datetime):
         response = client.execute(settings.KUSTO_DATABASE_NAME, query)
         results = response.primary_results[0]
         logging.info("Received response from Kusto client")
-
-        if not results:
+        logging.info(results)
+        if (not results or 
+            not hasattr(results, 'data') or 
+            not results.data or 
+            (isinstance(results.data, list) and len(results.data) == 0)):            
             logging.info("No results found, returning default summary")
             return {"apiId": api_id, "totalHits": 0, "errorHits": 0, "totalLatency": 0}
 
