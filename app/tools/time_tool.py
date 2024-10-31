@@ -27,7 +27,7 @@ def get_time_data(request: TimeRequest):
 
         # Use the correct method to determine the start and end times
         response = client.chat.completions.create(
-            model=settings.MODEL,
+            model=settings.OPEN_AI_MODEL,
             messages=[
                 {
                     "role": "system",
