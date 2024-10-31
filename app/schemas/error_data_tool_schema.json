@@ -5,14 +5,16 @@
             "apiId": "6704d0239db1d56c34fa68a4",
             "hitCount": 1,
             "errorType": "TARGET_CONNECTIVITY",
-            "errorCode": "101503"
+            "errorCode": "101503",
+            "deploymentId": "8c6d2f7d-fbd1-43d6-8fcc-2498c3c1wfwerw"
         },
         {
             "AGG_WINDOW_START_TIME": "2024-10-08 06:44:00+00:00",
             "apiId": "6704d0239db1d56c34fa68a4",
             "hitCount": 1,
             "errorType": "AUTH",
-            "errorCode": "900901"
+            "errorCode": "900901",
+            "deploymentId": "4rfrwffwfw-fbd1-43d6-8fcc-2498c3c1wfwerw"
         }
     ]
 ]
