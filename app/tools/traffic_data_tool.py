@@ -32,8 +32,8 @@ def get_traffic_data(api_id: str, start_time: datetime, end_time: datetime):
         # Always include the customerId condition
         query += f" customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)"
         query += """
-        | summarize totalHits = sum(hitCount) by AGG_WINDOW_START_TIME, proxyResponseCode
-        | project AGG_WINDOW_START_TIME, totalHits, proxyResponseCode
+        | summarize totalHits = sum(hitCount) by AGG_WINDOW_START_TIME, proxyResponseCode, apiId, deploymentId
+        | project AGG_WINDOW_START_TIME, totalHits, proxyResponseCode, apiId, deploymentId
         """
         logging.info(f"Final query: {query}")
 
@@ -45,11 +45,13 @@ def get_traffic_data(api_id: str, start_time: datetime, end_time: datetime):
         for row in results:
             data.append({
                 "AGG_WINDOW_START_TIME": row["AGG_WINDOW_START_TIME"],
-                "apiId": api_id,
+                "apiId": row["apiId"],
                 "totalHits": row["totalHits"],
-                "proxyResponseCode": row["proxyResponseCode"]
+                "proxyResponseCode": row["proxyResponseCode"],
+                "deploymentId":row["deploymentId"]
             })
-        logging.info(f"Extracted data: {data}")
+        logging.info(f"Extracted data:----------------------------- {data}")
+        logging.info(f"Extracted data end ----------------------------------------------------------------------------------")
 
         return data
 

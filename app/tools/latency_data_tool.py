@@ -31,7 +31,7 @@ def get_latency_data(api_id: str, start_time: datetime, end_time: datetime):
         
         query += f" customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)"
         query += """
-        | project AGG_WINDOW_START_TIME, apiId, customerId, responseLatencyMedian, backendLatencyMedian
+        | project AGG_WINDOW_START_TIME, apiId, customerId, responseLatencyMedian, backendLatencyMedian, deploymentId
         """
         logging.info(f"Final query: {query}")
 
@@ -46,7 +46,8 @@ def get_latency_data(api_id: str, start_time: datetime, end_time: datetime):
                 "apiId": row["apiId"],
                 "customerId": row["customerId"],
                 "responseLatencyMedian": row["responseLatencyMedian"],
-                "backendLatencyMedian": row["backendLatencyMedian"]
+                "backendLatencyMedian": row["backendLatencyMedian"],
+                "deploymentId": row["deploymentId"]
             })
         logging.info(f"Extracted data: {data}")
 

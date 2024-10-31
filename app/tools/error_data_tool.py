@@ -35,23 +35,28 @@ def get_error_data(api_id: str, start_time: datetime, end_time: datetime):
             analytics_proxy_error_summary
             | where AGG_WINDOW_START_TIME between (startTime .. endTime)
         ) on AGG_WINDOW_START_TIME
-        | project AGG_WINDOW_START_TIME, apiId, hitCount, errorType, errorCode
+        | project AGG_WINDOW_START_TIME, apiId, hitCount, errorType, errorCode, deploymentId
         """
         logging.info(f"Final query: {query}")
 
         response = client.execute(settings.KUSTO_DATABASE_NAME, query)
         results = response.primary_results[0]
         logging.info("Received response from Kusto client")
-
+        logging.info(results)
         data = []
-        for row in results:
-            data.append({
-                "AGG_WINDOW_START_TIME": row["AGG_WINDOW_START_TIME"],
-                "apiId": api_id,
-                "hitCount": row["hitCount"],
-                "errorType": row["errorType"],
-                "errorCode": row["errorCode"]
-            })
+        
+        if not results:
+            data.append("NoData")
+        else:
+            for row in results:
+                data.append({
+                    "AGG_WINDOW_START_TIME": row["AGG_WINDOW_START_TIME"],
+                    "apiId": row["apiId"],
+                    "hitCount": row["hitCount"],
+                    "errorType": row["errorType"],
+                    "errorCode": row["errorCode"],
+                    "deploymentId": row["deploymentId"]
+                })
         logging.info(f"Extracted data: {data}")
 
         return data
