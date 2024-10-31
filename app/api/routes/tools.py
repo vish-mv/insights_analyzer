@@ -28,7 +28,7 @@ async def select_tools(request: ToolRequest):
         logging.info("Initialized OpenAI client")
 
         response = client.chat.completions.create(
-            model=settings.MODEL,
+            model=settings.OPEN_AI_MODEL,
             messages=[
                 {
                     "role": "system",
