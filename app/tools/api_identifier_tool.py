@@ -40,7 +40,7 @@ def get_api_identifier_summary(organization_id: str, user_query: str):
         logging.info("Initialized OpenAI client")
 
         response = client.chat.completions.create(
-            model=settings.MODEL,
+            model=settings.OPEN_AI_MODEL,
             messages=[
                 {
                     "role": "user",
@@ -64,7 +64,7 @@ def get_api_identifier_summary(organization_id: str, user_query: str):
         api_name, api_id = response_content.split(',')
         logging.info(f"Extracted API name: {api_name}, API ID: {api_id}")
 
-        return {"apiName": api_name, "apiId": api_id}
+        return {"apiName": api_name, "apiId": api_id, "apiList":apis}
 
     except Exception as e:
         logging.error(f"An error occurred in get_api_identifier_summary: {e}")
