@@ -34,7 +34,7 @@ def get_time_data(request: TimeRequest):
                     "content": """You are an assistant that extracts time from a given query.
                     User will provide you current date time according to that you need to give Start Date and end date.
                     Your answer should only contain two dates separated with a comma. (Example answer: 2024-01-31,2024-10-20)
-                    And if the user's query doesn't have any info, start date will be yesterday. End date will be today."""
+                    And if the user's query doesn't have any info, start date will be yesterday. End date will be today. Always at least one day (24 hour time difference )should be there"""
                 },
                 {
                     "role": "user",
