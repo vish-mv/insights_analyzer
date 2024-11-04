@@ -17,6 +17,7 @@ with open("app/tools/tool_details.json", "r") as file:
 class ToolRequest(BaseModel):
     user_query: str
 
+# Update the select_tools function to better handle multiple tool selection
 @router.post("/tools")
 async def select_tools(request: ToolRequest):
     try:
@@ -33,12 +34,10 @@ async def select_tools(request: ToolRequest):
                 {
                     "role": "system",
                     "content": """You are an assistant that selects specific tools to grab data from a database.
-                    You will be provided with descriptions of available tools and a query given by the user.
-                    Your job is to find what tools can be used to get relevant data for that specific query.
-                    You should only respond with a comma-separated list of tool names only. If there are no tools available
-                    for a specific query, you can return 'None'.
-                    Remember you should organize tools in the order they need to be used.
-                    """
+                    You can select multiple tools if the query requires data from different sources.
+                    Consider relationships between different types of data when making selections.
+                    For example, if comparing errors with latency, select both Error Data Tool and Latency Data Tool.
+                    If User requesting performance or overall performance the it should be all tools"""
                 },
                 {
                     "role": "user",
@@ -51,7 +50,8 @@ async def select_tools(request: ToolRequest):
             ],
             max_tokens=2000
         )
-        logging.info("Received response from OpenAI")
+        
+        # Rest of the function remains the same        logging.info("Received response from OpenAI")
 
         response_content = response.choices[0].message.content.strip()
         logging.info(f"Response content: {response_content}")
