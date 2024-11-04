@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from app.api.routes.tools import select_tools, ToolRequest
-from app.tools import api_identifier_tool, error_data_tool, traffic_data_tool, summary_data_tool, latency_data_tool
+from app.tools import api_identifier_tool, error_data_tool, traffic_data_tool, latency_data_tool
 from openai import OpenAI
 from app.config import get_settings
 from app.tools.time_tool import get_time_data, TimeRequest
@@ -40,26 +40,34 @@ async def chat(request: ChatRequest):
         user_query = request.user_query
         logging.info(f"User query: {user_query}")
 
+        # Get time data
         time_data = get_time_data(TimeRequest(user_query=user_query))
         start_time = time_data["start_time"]
         end_time = time_data["end_time"]
         logging.info(f"Extracted time data - Start: {start_time}, End: {end_time}")
 
+        # Get API information
         api_summary = api_identifier_tool.get_api_identifier_summary(settings.ORGANIZATION_ID, user_query)
         api_id = api_summary["apiId"]
         api_name = api_summary["apiName"]
         api_lst = api_summary["apiList"]
         logging.info(f"Identified API - ID: {api_id}, Name: {api_name}")
 
-        summary_result = summary_data_tool.get_summary_data(api_id, start_time, end_time)
 
+        # Get selected tools
         tools_response = await select_tools(ToolRequest(user_query=user_query))
         selected_tools = tools_response["selected_tools"]
         logging.info(f"Selected tools: {selected_tools}")
 
-        data = []
+        # Collect data from all tools with proper structure
+        tool_data = {}
+        tool_schemas = {}
+        
         for tool in selected_tools:
             logging.info(f"Executing tool: {tool}")
+            tool_key = tool.lower().replace(" ", "_")
+            
+            # Get the actual data
             if tool == "Error Data Tool":
                 result = error_data_tool.get_error_data(api_id, start_time, end_time)
             elif tool == "Traffic Data Tool":
@@ -70,51 +78,119 @@ async def chat(request: ChatRequest):
                 logging.warning(f"Unknown tool: {tool}")
                 continue
 
-            #Convert datetime objects to strings
+            # Convert datetime objects to strings
             for item in result:
                 for key, value in item.items():
                     if isinstance(value, datetime.datetime):
                         item[key] = value.isoformat()
 
-            logging.info(f"Result from {tool}: {result}")
-            data.append(result)
+            # Store the data and schema
+            tool_data[tool_key] = [result]  # Wrap in list to match expected structure
+            tool_schemas[tool_key] = load_schema(tool_key)
+            logging.info(f"Collected data and schema for {tool}")
 
-        # Load the schema for the selected tools
-        schemas = {tool: load_schema(tool.lower().replace(" ", "_")) for tool in selected_tools}
-
-        # Request Claude to generate Python code for data analysis
-        logging.info("Requesting ChatGPT to generate Python code for data analysis")
+        # Generate analysis code using Anthropic
+        logging.info("Requesting Claude to generate Python code for data analysis")
         client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
         code_response = client.messages.create(
             model=settings.ANTHROPIC_MODEL,
-            system="""You are a Python code generator. Generate a Python function to analyze the following data schemas. 
-                    You will be provided by a query also by user. To answer that query need to generate a python code to analyze data.
-                    The function should accept data as an argument and return the analysis result. Your result should only contains 
-                    the python code for analysis. (Even No example usages ). Function of the oython code is always hould be 
-                    data_analyzer(data) data will be the {data} we passed to execute this. 
-                    While generating the code here are some instructions
-                    1. If user has some api id name in the query it handled by the data passed code will get filtered data no need to filter in code
-                    2. if time data in datetime64[ns, UTC] do not compare it with naive datetime object
-                    3. DO not directly try to Objects like DataFrame (Pandas) to Json that will occur serializable errors 
-                    """,
+            system="""You are a Python code generator. Generate a Python function called data_analyzer that analyzes multiple datasets.""",
             messages=[
                 {
                     "role": "user",
-                    "content": f"""Data schemas: {json.dumps(schemas)}. Generate a Python full complete function to analyze data similar to this schema according to the below query.
-                    User query is : {user_query} 
-                    This generated code need o=to accept data like this and need to analyze them according to the query and give output.
-                    Data are that passed to the code are in the given schema and passed real data will have data of each api calls made between two time points.
-                    You can use python modules like pandas, numpy, etc. While ethis code executing data can be occur serializable issues and errros
-                    Because some of data are date time as you can see. Make Sure code handles them and convert data if required.
-                    Remember this is a template of what kind of data the python code is going to receive atual data's values will be changed.
-                    Some common error that can occur listed down 
-                    1.An error occurred while processing the data: Invalid comparison between dtype=datetime64[ns, UTC] and datetime
-                    2.TypeError: Object of type DataFrame is not JSON serializable
-                    3. error : "'datetime.datetime' object has no attribute 'tz_localize'"
-                    4. error: "Invalid comparison between dtype=datetime64[ns, UTC] and datetime"
-                    5. Invalid comparison between dtype=datetime64[ns, UTC] and Timestamp
-                    Make sure to handle these no convertions if needed
-                    If this user_query requested a plot or a chart, code should optionally need to generate that as well and save it as chart.png. 
+                    "content": f"""Generate a Python function that safely analyzes this data structure:
+                    Data schemas: {json.dumps(tool_schemas)}
+                    User query: {user_query}
+                    
+                    Important requirements:
+                    1. Data comes in this nested structure: data['tool_name'][0] contains the array of records
+                    2. Each record has 'AGG_WINDOW_START_TIME' that needs to be converted to datetime
+                    3. Must handle empty or missing data gracefully
+                    4. Instead of saving charts to files, convert them to base64 strings
+                    5. Return format must be:
+                        {{
+                            "error": null or error message,
+                            "insights": [list of strings],
+                            "chart": base64_encoded_string or null,
+                            "data": {{}}
+                        }}
+                    
+                    Here's a template to start with:
+                    
+                    ```python
+                    def data_analyzer(data):
+                        try:
+                            insights = []
+                            chart_data = None
+                            
+                            # Validate input data
+                            if not data or not isinstance(data, dict):
+                                return {{"error": "Invalid input data", "insights": [], "chart": None, "data": {{}}}}
+                            
+                            # Initialize DataFrames dictionary
+                            dfs = {{}}
+                            
+                            # Safely create DataFrames for each tool
+                            for tool_name, tool_data in data.items():
+                                try:
+                                    if (tool_data and 
+                                        isinstance(tool_data, list) and 
+                                        len(tool_data) > 0 and 
+                                        isinstance(tool_data[0], list) and
+                                        len(tool_data[0]) > 0):
+                                        
+                                        # Create DataFrame from the inner list
+                                        df = pd.DataFrame(tool_data[0])
+                                        
+                                        # Convert timestamp column
+                                        df['AGG_WINDOW_START_TIME'] = pd.to_datetime(df['AGG_WINDOW_START_TIME'])
+                                        df.set_index('AGG_WINDOW_START_TIME', inplace=True)
+                                        
+                                        dfs[tool_name] = df
+                                        insights.append(f"Processed {{len(df)}} records from {{tool_name}}")
+                                    else:
+                                        insights.append(f"No valid data found for {{tool_name}}")
+                                except Exception as e:
+                                    insights.append(f"Error processing {{tool_name}}: {{str(e)}}")
+
+                            # If visualization is needed, convert to base64
+                            if len(dfs) > 0:  # Only create chart if we have data
+                                try:
+                                    plt.figure(figsize=(12, 6))
+                                    # Your plotting code here...
+                                    
+                                    # Convert plot to base64
+                                    import io
+                                    import base64
+                                    buf = io.BytesIO()
+                                    plt.savefig(buf, format='png', bbox_inches='tight')
+                                    buf.seek(0)
+                                    chart_data = base64.b64encode(buf.getvalue()).decode('utf-8')
+                                    plt.close()
+                                except Exception as e:
+                                    insights.append(f"Chart generation failed: {{str(e)}}")
+                            
+                            return {{
+                                "error": None,
+                                "insights": insights,
+                                "chart": chart_data,
+                                "data": {{}}  # Add your analysis data here
+                            }}
+                            
+                        except Exception as e:
+                            return {{
+                                "error": f"Analysis failed: {{str(e)}}",
+                                "insights": [],
+                                "chart": None,
+                                "data": {{}}
+                            }}
+                    ```
+                    
+                    Complete this function to analyze the data according to the user query. Make sure to:
+                    1. Handle all potential errors
+                    2. Generate meaningful insights
+                    3. Create visualizations when appropriate
+                    4. Return all numerical values as basic Python types (not numpy/pandas types)
                     """
                 }
             ],
@@ -123,99 +199,126 @@ async def chat(request: ChatRequest):
 
         generated_code = code_response.content
         logging.info(f"Generated Python code: {generated_code}")
+
+        # Extract code from Claude's response
+        code = ""
         if isinstance(generated_code, list):
             for block in generated_code:
-                if hasattr(block, 'text') and block.text.startswith('```'):
-                    # Extract code between triple backticks
-                    code = block.text.split('```')[1]
-                    # Remove the language identifier (e.g., 'python\n')
-                    code = code.split('\n', 1)[1]
-    
-    # If the response is a string already containing markdown
+                if hasattr(block, 'text'):
+                    text = block.text
+                    if '```python' in text:
+                        code = text.split('```python')[1].split('```')[0].strip()
+                        break
         elif isinstance(generated_code, str):
-            if '```' in generated_code:
-                # Extract code between triple backticks
-                code = generated_code.split('```')[1]
-                # Remove the language identifier (e.g., 'python\n')
-                code = code.split('\n', 1)[1]
-                
-        logging.info(f"Clened Python code: {code}")
-        python_executable = sys.executable
+            if '```python' in generated_code:
+                code = generated_code.split('```python')[1].split('```')[0].strip()
 
+        if not code:
+            raise HTTPException(status_code=500, detail="Failed to extract code from Claude's response")
 
-        # Add a call to the generated function and print the result
-        
-        # Add a call to the generated function and print the result
-        structured_data = {tool: data for tool in selected_tools}
+        logging.info(f"Cleaned Python code: {code}")
+
+        # Prepare execution code
         execution_code = f"""
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
+import pytz
+import json
+import io
+import base64
+
+def convert_to_serializable(obj):
+    if isinstance(obj, (np.int64, np.int32)):
+        return int(obj)
+    if isinstance(obj, (np.float64, np.float32)):
+        return float(obj)
+    if isinstance(obj, pd.Timestamp):
+        return obj.isoformat()
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    raise TypeError(f"Object of type {{type(obj)}} is not JSON serializable")
+
 {code}
 
 if __name__ == "__main__":
-    import json
-    data = json.loads('''{json.dumps(structured_data)}''')
-    result = data_analyzer(data)
-    print(json.dumps(result, indent=2))
+    try:
+        # Load data
+        data = json.loads('''{json.dumps(tool_data)}''')
+        
+        # Run analysis
+        result = data_analyzer(data)
+        
+        # Ensure result is serializable
+        print(json.dumps(result, default=convert_to_serializable, indent=2))
+    except Exception as e:
+        print(json.dumps({{
+            "error": f"Execution failed: {{str(e)}}",
+            "insights": [],
+            "chart": None,
+            "data": {{}}
+        }}, indent=2))
 """
-        logging.info(os.path)
-        if os.path.exists("chart.png"):
-            logging.info("chart.png found in root directory, deleting it.")
-            os.remove("chart.png")
-        else:
-            logging.info("chart.png not found in root directory.")
-            
-        # Save the execution code to a file
-        with open("analyze_data.py", "w") as code_file:
+
+        # Save and execute the code
+        with open("analyze_data.py", "w", encoding='utf-8') as code_file:
             code_file.write(execution_code)
 
-        # Execute the generated code with the actual data
-        logging.info(f"Executing the generated Python code with interpreter: {python_executable}")
+        logging.info("Executing the generated Python code")
         analysis_result = subprocess.run(
-            [python_executable, "analyze_data.py"],
+            [sys.executable, "analyze_data.py"],
             capture_output=True,
             text=True
         )
 
-        # Log the subprocess output and errors
+        # Handle execution results
         logging.info(f"Subprocess stdout: {analysis_result.stdout}")
         if analysis_result.stderr:
             logging.error(f"Subprocess stderr: {analysis_result.stderr}")
 
-        # Check if the subprocess execution was successful
         if analysis_result.returncode != 0:
             error_msg = f"Subprocess failed with return code {analysis_result.returncode}. Error: {analysis_result.stderr}"
             logging.error(error_msg)
             raise Exception(error_msg)
 
-        # Use the analysis result in the final ChatGPT response
-        logging.info("Generating final response using ChatGPT API")
-        openAiClient= OpenAI(api_key=settings.OPENAI_API_KEY)
-        final_response = openAiClient.chat.completions.create(
+        analysis_result = json.loads(analysis_result.stdout)
+        
+        # Extract chart data and remove it from results sent to ChatGPT
+        chart_data = analysis_result.pop("chart", None)
+        
+        # Generate final response using OpenAI with chart-free analysis
+        logging.info("Generating final response using OpenAI")
+        openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        final_response = openai_client.chat.completions.create(
             model=settings.OPEN_AI_MODEL,
             messages=[
                 {
                     "role": "system",
-                    "content": """You are a helpful assistant that provides detailed and clear summaries based on the user's query and the data provided. You will be attached api ids and api names list by user
-                    if the query requested names of apis or anything like that youll have to compare api in the data with the api id in the lst and give the api name then usr can understand better
-                    Maybe user query have some chart plots requests yu dont need to do that those handled sperately"""
+                    "content": """You are a helpful assistant that provides detailed and clear summaries based on the user's query and the data provided.
+                    Compare API IDs with the provided API list to use proper API names in your response.
+                    Focus on insights from the combined analysis of multiple data sources.
+                    If the Analysis result is empty you should return No Data available for answer this question
+                    Do not tell users hpw to do it just say you dont know beacuse no data politely"""
                 },
                 {
                     "role": "user",
-                    "content": f"User query: '{user_query}'. Analysis result: {analysis_result.stdout}. API List: {api_lst}"
+                    "content": f"User query: '{user_query}'. Analysis result: {json.dumps(analysis_result)}. API List: {api_lst}"
                 }
             ],
             max_tokens=10000
         )
 
+
+
         chat_response = final_response.choices[0].message.content
         logging.info(f"ChatGPT response: {chat_response}")
         
-        if os.path.exists("chart.png"):
-            logging.info("chart.png found in root directory, attaching it to the response.")
-            with open("chart.png", "rb") as image_file:
-                image_data = image_file.read()
-            response = {"response": chat_response, "chart": image_data.hex()}
-        else:
-            response = {"response": chat_response}
+        # Combine chat response with the previously extracted chart data
+        response = {
+            "response": chat_response,
+            "chart": chart_data  # Add back the chart data for frontend
+        }
         
         return response
 
