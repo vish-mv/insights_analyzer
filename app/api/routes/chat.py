@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from app.api.routes.tools import select_tools, ToolRequest
-from app.tools import api_identifier_tool, error_data_tool, traffic_data_tool, latency_data_tool
+from app.tools import api_identifier_tool, error_data_tool, traffic_data_tool, latency_data_tool, env_extractor
 from openai import OpenAI
 from app.config import get_settings
 from app.tools.time_tool import get_time_data, TimeRequest
@@ -53,6 +53,9 @@ async def chat(request: ChatRequest):
         api_lst = api_summary["apiList"]
         logging.info(f"Identified API - ID: {api_id}, Name: {api_name}")
 
+        env_summery = env_extractor.get_environment_summary(settings.ORGANIZATION_ID,user_query)
+        env_name = env_summery["selectedEnvironment"]
+
 
         # Get selected tools
         tools_response = await select_tools(ToolRequest(user_query=user_query))
@@ -69,15 +72,23 @@ async def chat(request: ChatRequest):
             
             # Get the actual data
             if tool == "Error Data Tool":
-                result = error_data_tool.get_error_data(api_id, start_time, end_time)
+                result = error_data_tool.get_error_data(api_id, start_time, end_time, env_name)
             elif tool == "Traffic Data Tool":
-                result = traffic_data_tool.get_traffic_data(api_id, start_time, end_time)                
+                result = traffic_data_tool.get_traffic_data(api_id, start_time, end_time, env_name)                
             elif tool == "Latency Data Tool":
-                result = latency_data_tool.get_latency_data(api_id, start_time, end_time)
+                result = latency_data_tool.get_latency_data(api_id, start_time, end_time ,env_name)
             else:
                 logging.warning(f"Unknown tool: {tool}")
-                continue
-
+                return {
+                    "response": f"Sorry, I cannot process this request. Please insert a query about Insights such as Error Data, Traffic Data, Latency Data and etc.",
+                    "chart": None
+                }
+            if not result or len(result) == 0:
+                logging.info(f"No data returned from {tool} for the specified time period")
+                return {
+                    "response": f"Sorry, I couldn't find any data for the specified time period ({start_time} to {end_time}) for your query. Please try adjusting your time range or check if data exists for this.",
+                    "chart": None
+                }
             # Convert datetime objects to strings
             for item in result:
                 for key, value in item.items():
@@ -101,6 +112,7 @@ async def chat(request: ChatRequest):
                     "content": f"""Generate a Python function that safely analyzes this data structure:
                     Data schemas: {json.dumps(tool_schemas)}
                     User query: {user_query}
+                    Additional Info: In user query there maybe environment details. You dont have to analyze them in the code they are handled in the program. COde will recieve filtered darta.
                     
                     Important requirements:
                     1. Data comes in this nested structure: data['tool_name'][0] contains the array of records
@@ -298,12 +310,14 @@ if __name__ == "__main__":
                     "content": """You are a helpful assistant that provides detailed and clear summaries based on the user's query and the data provided.
                     Compare API IDs with the provided API list to use proper API names in your response.
                     Focus on insights from the combined analysis of multiple data sources.
+                    You'll be provided with a environment name this alalysis result is based on  that purticular environment. (include it in answer for a better answer).
                     If the Analysis result is empty you should return No Data available for answer this question
-                    Do not tell users hpw to do it just say you dont know beacuse no data politely"""
+                    Do not tell users how to do it just say you dont know beacuse no data politely
+                    If the recieved environment name is SANDBOX you should return it to user as DEVELOPMENT not sandbox"""
                 },
                 {
                     "role": "user",
-                    "content": f"User query: '{user_query}'. Analysis result: {json.dumps(analysis_result)}. API List: {api_lst}"
+                    "content": f"User query: '{user_query}'. Analysis result: {json.dumps(analysis_result)}. API List: {api_lst}. Environment: {env_name}"
                 }
             ],
             max_tokens=10000
