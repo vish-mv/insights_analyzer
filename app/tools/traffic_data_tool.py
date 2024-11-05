@@ -7,7 +7,7 @@ import logging
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def get_traffic_data(api_id: str, start_time: datetime, end_time: datetime):
+def get_traffic_data(api_id: str, start_time: datetime, end_time: datetime,env_name:str):
     try:
         logging.info("Starting get_traffic_data function")
         client = get_kusto_client()
@@ -30,7 +30,7 @@ def get_traffic_data(api_id: str, start_time: datetime, end_time: datetime):
             query+="|where"
         
         # Always include the customerId condition
-        query += f" customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)"
+        query += f" customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime) and keyType =='{env_name}'"
         query += """
         | summarize totalHits = sum(hitCount) by AGG_WINDOW_START_TIME, proxyResponseCode, apiId, deploymentId
         | project AGG_WINDOW_START_TIME, totalHits, proxyResponseCode, apiId, deploymentId
