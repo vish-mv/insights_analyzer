@@ -7,7 +7,7 @@ import logging
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def get_error_data(api_id: str, start_time: datetime, end_time: datetime):
+def get_error_data(api_id: str, start_time: datetime, end_time: datetime, env_name:str):
     try:
         logging.info("Starting get_error_data function")
         client = get_kusto_client()
@@ -29,7 +29,7 @@ def get_error_data(api_id: str, start_time: datetime, end_time: datetime):
         else:
             query+="|where"
         
-        query += f" customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime)"
+        query += f" customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime) and keyType =='{env_name}'"
         query += """
         | join kind=inner (
             analytics_proxy_error_summary
