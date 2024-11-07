@@ -7,12 +7,13 @@ import logging
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def get_traffic_data(api_id: str, start_time: datetime, end_time: datetime,env_name:str):
+def get_traffic_data(apiName: str, start_time: datetime, end_time: datetime):
     try:
         logging.info("Starting get_traffic_data function")
         client = get_kusto_client()
         settings = get_settings()
         organization_id = settings.ORGANIZATION_ID
+        environment_id =  settings.ENVIRONMENT_ID
         logging.info("Retrieved settings and Kusto client")
 
         # Construct the base query
@@ -24,16 +25,16 @@ def get_traffic_data(api_id: str, start_time: datetime, end_time: datetime,env_n
         logging.info(f"Constructed base query: {query}")
 
         # Add API ID condition if it's not 'NoData'
-        if api_id != 'NoData':
-            query += f"| where apiId == '{api_id}' and "
+        if apiName != 'NoData':
+            query += f"| where apiName == '{apiName}' and "
         else:
             query+="|where"
         
         # Always include the customerId condition
-        query += f" customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime) and keyType =='{env_name}'"
+        query += f" customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime) and deploymentId == '{environment_id}'"
         query += """
-        | summarize totalHits = sum(hitCount) by AGG_WINDOW_START_TIME, proxyResponseCode, apiId, deploymentId
-        | project AGG_WINDOW_START_TIME, totalHits, proxyResponseCode, apiId, deploymentId
+        | summarize totalHits = sum(hitCount) by AGG_WINDOW_START_TIME, proxyResponseCode, apiName, deploymentId
+        | project AGG_WINDOW_START_TIME, totalHits, proxyResponseCode, apiName, deploymentId
         """
         logging.info(f"Final query: {query}")
 
@@ -45,10 +46,9 @@ def get_traffic_data(api_id: str, start_time: datetime, end_time: datetime,env_n
         for row in results:
             data.append({
                 "AGG_WINDOW_START_TIME": row["AGG_WINDOW_START_TIME"],
-                "apiId": row["apiId"],
+                "apiName": row["apiName"],
                 "totalHits": row["totalHits"],
-                "proxyResponseCode": row["proxyResponseCode"],
-                "deploymentId":row["deploymentId"]
+                "proxyResponseCode": row["proxyResponseCode"]
             })
         logging.info(f"Extracted data:----------------------------- {data}")
         logging.info(f"Extracted data end ----------------------------------------------------------------------------------")

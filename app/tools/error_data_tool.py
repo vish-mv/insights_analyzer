@@ -7,12 +7,13 @@ import logging
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def get_error_data(api_id: str, start_time: datetime, end_time: datetime, env_name:str):
+def get_error_data(apiName: str, start_time: datetime, end_time: datetime):
     try:
         logging.info("Starting get_error_data function")
         client = get_kusto_client()
         settings = get_settings()
         organization_id = settings.ORGANIZATION_ID
+        environment_id =  settings.ENVIRONMENT_ID
         logging.info("Retrieved settings and Kusto client")
 
         # Construct the base query
@@ -24,18 +25,18 @@ def get_error_data(api_id: str, start_time: datetime, end_time: datetime, env_na
         logging.info(f"Constructed query: {query}")
 
         # Add API ID condition if it's not None
-        if api_id != 'NoData':
-            query += f"| where apiId == '{api_id}' and "
+        if apiName != 'NoData':
+            query += f"| where apiName == '{apiName}' and "
         else:
             query+="|where"
         
-        query += f" customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime) and keyType =='{env_name}'"
+        query += f" customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime) and deploymentId == '{environment_id}'"
         query += """
         | join kind=inner (
             analytics_proxy_error_summary
             | where AGG_WINDOW_START_TIME between (startTime .. endTime)
         ) on AGG_WINDOW_START_TIME
-        | project AGG_WINDOW_START_TIME, apiId, hitCount, errorType, errorCode, deploymentId
+        | project AGG_WINDOW_START_TIME, apiName, hitCount, errorType, errorCode, deploymentId
         """
         logging.info(f"Final query: {query}")
 
@@ -51,11 +52,10 @@ def get_error_data(api_id: str, start_time: datetime, end_time: datetime, env_na
             for row in results:
                 data.append({
                     "AGG_WINDOW_START_TIME": row["AGG_WINDOW_START_TIME"],
-                    "apiId": row["apiId"],
+                    "apiName": row["apiName"],
                     "hitCount": row["hitCount"],
                     "errorType": row["errorType"],
                     "errorCode": row["errorCode"],
-                    "deploymentId": row["deploymentId"]
                 })
         logging.info(f"Extracted data: {data}")
 

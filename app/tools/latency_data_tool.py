@@ -7,13 +7,14 @@ import logging
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def get_latency_data(api_id: str, start_time: datetime, end_time: datetime, env_name: str):
+def get_latency_data(apiName: str, start_time: datetime, end_time: datetime):
     try:
         logging.info("Starting get_latency_data function")
         client = get_kusto_client()
         settings = get_settings()
         organization_id = settings.ORGANIZATION_ID
-        logging.info(f"Retrieved settings and Kusto client. Parameters: api_id={api_id}, env_name={env_name}")
+        environment_id =  settings.ENVIRONMENT_ID
+        logging.info(f"Retrieved settings and Kusto client. Parameters: apiName={apiName}")
 
         
         # Construct the query
@@ -21,33 +22,31 @@ def get_latency_data(api_id: str, start_time: datetime, end_time: datetime, env_
         let startTime = datetime({start_time});
         let endTime = datetime({end_time});
         let envMapping = analytics_response_code_summary
-        | where customerId == '{organization_id}'
+        | where customerId == '{organization_id}' and deploymentId == '{environment_id}'
         """
 
-        if api_id != 'NoData':
-            query += f"| where apiId == '{api_id}'"
+        if apiName != 'NoData':
+            query += f"| where apiName == '{apiName}'"
 
         query += f"""
-        | where keyType == '{env_name}'
-        | distinct deploymentId, keyType, apiId;
+        | distinct deploymentId, apiName;
         analytics_target_response_summary
-        | where customerId == '{organization_id}'
+        | where customerId == '{organization_id}' and deploymentId == '{environment_id}'
         | where AGG_WINDOW_START_TIME between (startTime .. endTime)
         """
 
-        if api_id != 'NoData':
-            query += f"| where apiId == '{api_id}'"
+        if apiName != 'NoData':
+            query += f"| where apiName == '{apiName}'"
 
         query += f"""
         | join kind=inner envMapping on deploymentId
         | project 
             AGG_WINDOW_START_TIME,
-            apiId,
+            apiName,
             customerId,
             responseLatencyMedian,
             backendLatencyMedian,
-            deploymentId,
-            keyType
+            deploymentId
         | order by AGG_WINDOW_START_TIME asc
         """
         
@@ -61,11 +60,10 @@ def get_latency_data(api_id: str, start_time: datetime, end_time: datetime, env_
         for row in results:
             data.append({
                 "AGG_WINDOW_START_TIME": row["AGG_WINDOW_START_TIME"],
-                "apiId": row["apiId"],
+                "apiName": row["apiName"],
                 "customerId": row["customerId"],
                 "responseLatencyMedian": row["responseLatencyMedian"],
                 "backendLatencyMedian": row["backendLatencyMedian"],
-                "deploymentId": row["deploymentId"],
             })
 
         logging.info(f"Processed {len(data)} data points")
