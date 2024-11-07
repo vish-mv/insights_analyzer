@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from app.api.routes.tools import select_tools, ToolRequest
 from app.tools import api_identifier_tool, error_data_tool, traffic_data_tool, latency_data_tool, env_extractor
+from app.tools.data_extractor import extract_data, DataExtractionRequest
 from openai import OpenAI
 from app.config import get_settings
 from app.tools.time_tool import get_time_data, TimeRequest
@@ -41,20 +42,32 @@ async def chat(request: ChatRequest):
         logging.info(f"User query: {user_query}")
 
         # Get time data
-        time_data = get_time_data(TimeRequest(user_query=user_query))
-        start_time = time_data["start_time"]
-        end_time = time_data["end_time"]
-        logging.info(f"Extracted time data - Start: {start_time}, End: {end_time}")
+        # time_data = get_time_data(TimeRequest(user_query=user_query))
+        # start_time = time_data["start_time"]
+        # end_time = time_data["end_time"]
+        # logging.info(f"Extracted time data - Start: {start_time}, End: {end_time}")
 
         # Get API information
-        api_summary = api_identifier_tool.get_api_identifier_summary(settings.ORGANIZATION_ID, user_query)
-        api_id = api_summary["apiId"]
-        api_name = api_summary["apiName"]
-        api_lst = api_summary["apiList"]
-        logging.info(f"Identified API - ID: {api_id}, Name: {api_name}")
+        # api_summary = api_identifier_tool.get_api_identifier_summary(settings.ORGANIZATION_ID, user_query)
+        # api_id = api_summary["apiId"]
+        # api_name = api_summary["apiName"]
+        # api_lst = api_summary["apiList"]
+        # logging.info(f"Identified API - ID: {api_id}, Name: {api_name}")
 
-        env_summery = env_extractor.get_environment_summary(settings.ORGANIZATION_ID,user_query)
-        env_name = env_summery["selectedEnvironment"]
+        # env_summery = env_extractor.get_environment_summary(settings.ORGANIZATION_ID,user_query)
+        # env_name = env_summery["selectedEnvironment"]
+
+        extracted_data = extract_data(DataExtractionRequest(
+            user_query=request.user_query
+        ))
+        
+        # Extract the values you need
+        # env_name = extracted_data["environment"]["selectedEnvironment"]
+        start_time = extracted_data["timeRange"]["start_time"]
+        end_time = extracted_data["timeRange"]["end_time"]
+        api_name = extracted_data["api"]["apiName"]
+        # api_id = extracted_data["api"]["apiId"]
+        # api_lst = extracted_data["api"]["apiList"]
 
 
         # Get selected tools
@@ -72,11 +85,11 @@ async def chat(request: ChatRequest):
             
             # Get the actual data
             if tool == "Error Data Tool":
-                result = error_data_tool.get_error_data(api_id, start_time, end_time, env_name)
+                result = error_data_tool.get_error_data(api_name, start_time, end_time)
             elif tool == "Traffic Data Tool":
-                result = traffic_data_tool.get_traffic_data(api_id, start_time, end_time, env_name)                
+                result = traffic_data_tool.get_traffic_data(api_name, start_time, end_time)                
             elif tool == "Latency Data Tool":
-                result = latency_data_tool.get_latency_data(api_id, start_time, end_time ,env_name)
+                result = latency_data_tool.get_latency_data(api_name, start_time, end_time)
             else:
                 logging.warning(f"Unknown tool: {tool}")
                 return {
@@ -113,13 +126,27 @@ async def chat(request: ChatRequest):
                     Data schemas: {json.dumps(tool_schemas)}
                     User query: {user_query}
                     Additional Info: In user query there maybe environment details. You dont have to analyze them in the code they are handled in the program. COde will recieve filtered darta.
+                    If you use the traffic tool you'll get a proxyResponseCode the if seems like can help the query use it otherwise ignore it.
                     
                     Important requirements:
                     1. Data comes in this nested structure: data['tool_name'][0] contains the array of records
                     2. Each record has 'AGG_WINDOW_START_TIME' that needs to be converted to datetime
                     3. Must handle empty or missing data gracefully
                     4. Instead of saving charts to files, convert them to base64 strings
-                    5. Return format must be:
+                    5. Code do not need to do filtering using Api name (if a api mentioned in the user query). Beacuse filtering are done before data send to the code(If a api name mentioned program will handle that seperately and only send data relevent to that api to the code). 
+                    6. When drawing charts code should not draw it per each hit count beacuse if the time period is long charts will be unreadable if that happened.
+                    So if User haven't given instructions for that use this default while drawing charts:
+                    We have maximun data for 6 months when code draw plots they should be readable. IF the plot has time data We should show them as a readable way
+                    As an example use requst data for a month then if the code draw plots like day by day it will be a mess. So as a solution for that We have following general scenario(filter in chart).
+                    If user haven't mentioned any data about this you can use this below general way.
+                    If Query is about:
+                    a. two days or less plots time range will be hours (no time data in query is also in this catogiry)
+                    b. less than two weeks and more than two days time range will be days
+                    c. Less than month more than twoo weeks time range will be 3 to 5 days select according to the query
+                    d. more than one month less than 3 months time range will be weeks (per one week or per two weeks select on query)
+                    e. more than 3 months  it will be month by month.
+                    This should only happen if only users query has no info about plots.
+                    7. Return format must be:
                         {{
                             "error": null or error message,
                             "insights": [list of strings],
@@ -199,7 +226,7 @@ async def chat(request: ChatRequest):
                     ```
                     
                     Complete this function to analyze the data according to the user query. Make sure to:
-                    1. Handle all potential errors
+                    1. Handle all potential errors (Consider this error while chart generation: The seaborn styles shipped by Matplotlib are deprecated since 3.6, as they no longer correspond to the styles shipped by seaborn. However, they will remain available as 'seaborn-v0_8-<style>'. Alternatively, directly use the seaborn API instead.)
                     2. Generate meaningful insights
                     3. Create visualizations when appropriate
                     4. Return all numerical values as basic Python types (not numpy/pandas types)
@@ -308,16 +335,16 @@ if __name__ == "__main__":
                 {
                     "role": "system",
                     "content": """You are a helpful assistant that provides detailed and clear summaries based on the user's query and the data provided.
-                    Compare API IDs with the provided API list to use proper API names in your response.
                     Focus on insights from the combined analysis of multiple data sources.
-                    You'll be provided with a environment name this alalysis result is based on  that purticular environment. (include it in answer for a better answer).
+                    All thse analysis happens for development environment only so inlcude that in the answer.
                     If the Analysis result is empty you should return No Data available for answer this question
                     Do not tell users how to do it just say you dont know beacuse no data politely
-                    If the recieved environment name is SANDBOX you should return it to user as DEVELOPMENT not sandbox"""
+                    Respond with better fromatting I'll render them  (markdown) always need to split points ,lines using'|' and use ## only in headers. DO not give tables.
+                    All the lines should be seperated with '|' even end of the topics (eg: ##Overall Peformance | **Most api calls**| Most api call... """
                 },
                 {
                     "role": "user",
-                    "content": f"User query: '{user_query}'. Analysis result: {json.dumps(analysis_result)}. API List: {api_lst}. Environment: {env_name}"
+                    "content": f"User query: '{user_query}'. Analysis result: {json.dumps(analysis_result)}."
                 }
             ],
             max_tokens=10000
