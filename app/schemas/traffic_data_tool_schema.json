@@ -2,24 +2,21 @@
     [
         {
             "AGG_WINDOW_START_TIME": "2024-10-10T08:41:30+00:00", 
-            "apiId": "28hwbbbi42ef2r", 
+            "apiName": "echo-service-echo", 
             "totalHits": 2, 
-            "proxyResponseCode": "404",
-            "deploymentId": "8c6d2f7d-fbd1-43d6-8fcc-2498c3c1wfwerw"
+            "proxyResponseCode": "401"
         }, 
         {
             "AGG_WINDOW_START_TIME": "2024-10-10T08:41:10+00:00", 
-            "apiId": "28hwbbbi42ef2r", 
+            "apiName": "book-service-rest", 
             "totalHits": 1, 
-            "proxyResponseCode": "200",
-            "deploymentId": "4rfrwffwfw-fbd1-43d6-8fcc-2498c3c1wfwerw"
+            "proxyResponseCode": "200"
         },
         {
             "AGG_WINDOW_START_TIME": "2024-10-10T08:41:10+00:00", 
-            "apiId": "13242422474744", 
+            "apiName": "book-list", 
             "totalHits": 1, 
-            "proxyResponseCode": "305",
-            "deploymentId": "3ffrffrffe-fbd1-43d6-8fcc-2498c3c1wfwerw"
+            "proxyResponseCode": "305"
         }
     ]
 ]

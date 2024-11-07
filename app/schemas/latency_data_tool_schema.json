@@ -1,18 +1,16 @@
 [
     [
         {"AGG_WINDOW_START_TIME": "2024-10-10T08:41:30+00:00",
-         "apiId": "6704d0239db1d56c34fa68a4", 
+         "apiName": "book-list", 
          "customerId": "92f0ae1a-d309-4ef1-9de8-74ec457d5b88", 
          "responseLatencyMedian": 2.0,
-         "backendLatencyMedian": 2.0,
-         "deploymentId": "8c6d2f7d-fbd1-43d6-8fcc-2498c3c1wfwerw"
+         "backendLatencyMedian": 2.0
          }, 
          {"AGG_WINDOW_START_TIME": "2024-10-10T08:41:10+00:00",
-          "apiId": "6704d0239db1d56c34fa68a4",
+          "apiName": "echo-service-echo",
           "customerId": "92f0ae1a-d309-4ef1-9de8-74ec457d5b88",
           "responseLatencyMedian": 3.0,
-          "backendLatencyMedian": 1.0,
-          "deploymentId": "4rfrwffwfw-fbd1-43d6-8fcc-2498c3c1wfwerw"
+          "backendLatencyMedian": 1.0
         }
     ]
 ]
