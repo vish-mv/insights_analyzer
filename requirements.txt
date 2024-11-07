@@ -67,3 +67,5 @@ uvicorn==0.24.0
 watchfiles==0.24.0
 websockets==13.1
 wheel==0.41.2
+matplotlib==3.5.3 
+seaborn==0.13.2
