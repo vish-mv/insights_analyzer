@@ -21,6 +21,7 @@ class Settings(BaseSettings):
 
     # Organization ID
     ORGANIZATION_ID: str
+    ENVIRONMENT_ID: str
 
     #Models Name
     OPEN_AI_MODEL: str
