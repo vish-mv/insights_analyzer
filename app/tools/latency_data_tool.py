@@ -21,33 +21,15 @@ def get_latency_data(apiName: str, start_time: datetime, end_time: datetime):
         query = f"""
         let startTime = datetime({start_time});
         let endTime = datetime({end_time});
-        let envMapping = analytics_response_code_summary
-        | where customerId == '{organization_id}' and deploymentId == '{environment_id}'
-        """
-
-        if apiName != 'NoData':
-            query += f"| where apiName == '{apiName}'"
-
-        query += f"""
-        | distinct deploymentId, apiName;
         analytics_target_response_summary
         | where customerId == '{organization_id}' and deploymentId == '{environment_id}'
-        | where AGG_WINDOW_START_TIME between (startTime .. endTime)
         """
 
         if apiName != 'NoData':
             query += f"| where apiName == '{apiName}'"
 
-        query += f"""
-        | join kind=inner envMapping on deploymentId
-        | project 
-            AGG_WINDOW_START_TIME,
-            apiName,
-            customerId,
-            responseLatencyMedian,
-            backendLatencyMedian,
-            deploymentId
-        | order by AGG_WINDOW_START_TIME asc
+        query += f"""        
+        | summarize p95_latency = percentile(responseLatencyPercentile, 95) by AGG_WINDOW_START_TIME, apiName, hitCount
         """
         
         logging.info(f"Executing query: {query}")
@@ -61,9 +43,8 @@ def get_latency_data(apiName: str, start_time: datetime, end_time: datetime):
             data.append({
                 "AGG_WINDOW_START_TIME": row["AGG_WINDOW_START_TIME"],
                 "apiName": row["apiName"],
-                "customerId": row["customerId"],
-                "responseLatencyMedian": row["responseLatencyMedian"],
-                "backendLatencyMedian": row["backendLatencyMedian"],
+                "latency": row["p95_latency"],
+                "hitCount": row["hitCount"]
             })
 
         logging.info(f"Processed {len(data)} data points")

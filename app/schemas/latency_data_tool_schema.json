@@ -1,16 +1,14 @@
 [
     [
         {"AGG_WINDOW_START_TIME": "2024-10-10T08:41:30+00:00",
-         "apiName": "book-list", 
-         "customerId": "92f0ae1a-d309-4ef1-9de8-74ec457d5b88", 
-         "responseLatencyMedian": 2.0,
-         "backendLatencyMedian": 2.0
+         "apiName": "book-list",  
+         "latency": 4,
+         "hitCount": "1"
          }, 
          {"AGG_WINDOW_START_TIME": "2024-10-10T08:41:10+00:00",
           "apiName": "echo-service-echo",
-          "customerId": "92f0ae1a-d309-4ef1-9de8-74ec457d5b88",
-          "responseLatencyMedian": 3.0,
-          "backendLatencyMedian": 1.0
+          "latency": 60.220,
+          "hitCount": "100"
         }
     ]
 ]

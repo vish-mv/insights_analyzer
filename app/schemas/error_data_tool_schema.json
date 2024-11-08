@@ -5,16 +5,14 @@
             "apiName": "echo-service-echo",
             "hitCount": 1,
             "errorType": "TARGET_CONNECTIVITY",
-            "errorCode": "101503",
-            "environmentId": "8c6d2f7d-fbd1-43d6-8fcc-2498c3c1wfwerw"
+            "errorMessage": "CONNECTION_TIMEOUT"
         },
         {
             "AGG_WINDOW_START_TIME": "2024-10-08 06:44:00+00:00",
             "apiName": "book-service-rest",
             "hitCount": 100,
             "errorType": "AUTH",
-            "errorCode": "900901",
-            "environmentId": "4rfrwffwfw-fbd1-43d6-8fcc-2498c3c1wfwerw"
+            "errorMessage": "OTHER"
         }
     ]
 ]

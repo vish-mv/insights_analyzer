@@ -20,10 +20,8 @@ def get_error_data(apiName: str, start_time: datetime, end_time: datetime):
         query = f"""
         let startTime = datetime({start_time});
         let endTime = datetime({end_time});
-        analytics_response_code_summary
+        analytics_proxy_error_summary
         """
-        logging.info(f"Constructed query: {query}")
-
         # Add API ID condition if it's not None
         if apiName != 'NoData':
             query += f"| where apiName == '{apiName}' and "
@@ -32,11 +30,7 @@ def get_error_data(apiName: str, start_time: datetime, end_time: datetime):
         
         query += f" customerId == '{organization_id}' and AGG_WINDOW_START_TIME between (startTime .. endTime) and deploymentId == '{environment_id}'"
         query += """
-        | join kind=inner (
-            analytics_proxy_error_summary
-            | where AGG_WINDOW_START_TIME between (startTime .. endTime)
-        ) on AGG_WINDOW_START_TIME
-        | project AGG_WINDOW_START_TIME, apiName, hitCount, errorType, errorCode, deploymentId
+        | project AGG_WINDOW_START_TIME, apiName, hitCount, errorType, errorMessage
         """
         logging.info(f"Final query: {query}")
 
@@ -55,7 +49,7 @@ def get_error_data(apiName: str, start_time: datetime, end_time: datetime):
                     "apiName": row["apiName"],
                     "hitCount": row["hitCount"],
                     "errorType": row["errorType"],
-                    "errorCode": row["errorCode"],
+                    "errorMessage": row["errorMessage"],
                 })
         logging.info(f"Extracted data: {data}")
 
