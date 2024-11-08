@@ -13,6 +13,7 @@ import os
 import sys
 import datetime
 from anthropic import Anthropic
+import tempfile
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -144,8 +145,11 @@ async def chat(request: ChatRequest):
                     b. less than two weeks and more than two days time range will be days
                     c. Less than month more than twoo weeks time range will be 3 to 5 days select according to the query
                     d. more than one month less than 3 months time range will be weeks (per one week or per two weeks select on query)
-                    e. more than 3 months  it will be month by month.
+                    e. more than 3 months  it will be month by month.   
+                    Info: WHen it is above two weeks try not to draw charts for hourly performance it willl be hard to read
+                    When do this Use average of the times. DO not directly use all the hitpoints take average of them according to the timeframe even in latency use average according to user query or defaults given.
                     This should only happen if only users query has no info about plots.
+                    Additional info: for charts bar charts would be better beacuse easy to understand and easy to show via average but you can decide what chart to use based on the question But remeber they nead to be readable beacuse can have api calls per 10 seconds cant show them all. Have to get average based on time.
                     7. Return format must be:
                         {{
                             "error": null or error message,
@@ -226,10 +230,11 @@ async def chat(request: ChatRequest):
                     ```
                     
                     Complete this function to analyze the data according to the user query. Make sure to:
-                    1. Handle all potential errors (Consider this error while chart generation: The seaborn styles shipped by Matplotlib are deprecated since 3.6, as they no longer correspond to the styles shipped by seaborn. However, they will remain available as 'seaborn-v0_8-<style>'. Alternatively, directly use the seaborn API instead.)
+                    1. Handle all potential errors
                     2. Generate meaningful insights
                     3. Create visualizations when appropriate
                     4. Return all numerical values as basic Python types (not numpy/pandas types)
+                    5. DO not use seaborn for chart generation or anything
                     """
                 }
             ],
@@ -304,12 +309,21 @@ if __name__ == "__main__":
         with open("analyze_data.py", "w", encoding='utf-8') as code_file:
             code_file.write(execution_code)
 
-        logging.info("Executing the generated Python code")
-        analysis_result = subprocess.run(
-            [sys.executable, "analyze_data.py"],
-            capture_output=True,
-            text=True
-        )
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as temp_file:
+            temp_file.write(execution_code)
+            temp_file_path = temp_file.name
+
+        try:
+            logging.info("Executing the generated Python code")
+            analysis_result = subprocess.run(
+                [sys.executable, temp_file_path],
+                capture_output=True,
+                text=True
+            )
+        finally:
+            # Clean up the temporary file
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
 
         # Handle execution results
         logging.info(f"Subprocess stdout: {analysis_result.stdout}")
@@ -339,6 +353,7 @@ if __name__ == "__main__":
                     All thse analysis happens for development environment only so inlcude that in the answer.
                     If the Analysis result is empty you should return No Data available for answer this question
                     Do not tell users how to do it just say you dont know beacuse no data politely
+                    There are chart will generated seperately for the question (eg: heatmaps, usage charts) and sent to the user. In the answer Include you can see the chart below or something. If a chart generation error came from result exclude this. 
                     Respond with better fromatting I'll render them  (markdown) always need to split points ,lines using'|' and use ## only in headers. DO not give tables.
                     All the lines should be seperated with '|' even end of the topics (eg: ##Overall Peformance | **Most api calls**| Most api call... """
                 },
