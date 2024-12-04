@@ -126,9 +126,10 @@ async def chat(request: ChatRequest):
                     "content": f"""Generate a Python function that safely analyzes this data structure:
                     Data schemas: {json.dumps(tool_schemas)}
                     User query: {user_query}
-                    Additional Info: In user query there maybe environment details. You dont have to analyze them in the code they are handled in the program. COde will recieve filtered darta.
+                    Additional Info: In user query there maybe environment details. You dont have to analyze them in the code they are handled in the program. COde will recieve filtered darta. And if there predictions requested in the query use a proper algorithm for that and mention that algorithm is the answer as well.
                     If you use the traffic tool you'll get a proxyResponseCode the if seems like can help the query use it otherwise ignore it.
-                    
+                    ! First think a plan how to do this task and then follow that plan to do tne task. Then If there any issues with that fix them before respond. The you can generate a really accurate code.  
+
                     Important requirements:
                     1. Data comes in this nested structure: data['tool_name'][0] contains the array of records
                     2. Each record has 'AGG_WINDOW_START_TIME' that needs to be converted to datetime
@@ -147,9 +148,9 @@ async def chat(request: ChatRequest):
                     d. more than one month less than 3 months time range will be weeks (per one week or per two weeks select on query)
                     e. more than 3 months  it will be month by month.   
                     Info: WHen it is above two weeks try not to draw charts for hourly performance it willl be hard to read
-                    When do this Use average of the times. DO not directly use all the hitpoints take average of them according to the timeframe even in latency use average according to user query or defaults given.
+                    When do this Use average of the times. DO not directly use all the hitpoints take average of them according to the timeframe even in latency use average according to user query or defaults given. When code give the average value mention for what time period avreage calculated.
                     This should only happen if only users query has no info about plots.
-                    Additional info: for charts bar charts would be better beacuse easy to understand and easy to show via average but you can decide what chart to use based on the question But remeber they nead to be readable beacuse can have api calls per 10 seconds cant show them all. Have to get average based on time.
+                    Additional info: for charts bar charts would be better (for latency use bar charts - average time buckets for relevent time pereiods, When do comparisons or collerations you have freedom to choose charts as necessory) beacuse easy to understand and easy to show via average but you can decide what chart to use based on the question But remeber they nead to be readable beacuse can have api calls per 10 seconds cant show them all. Have to get average based on time.
                     7. Return format must be:
                         {{
                             "error": null or error message,
@@ -235,10 +236,11 @@ async def chat(request: ChatRequest):
                     3. Create visualizations when appropriate
                     4. Return all numerical values as basic Python types (not numpy/pandas types)
                     5. DO not use seaborn for chart generation or anything
+                    6. Always Calculate bth total and average for selected time periods. USe average for charts and return all to the data .
                     """
                 }
             ],
-            max_tokens=8000
+            max_tokens=8192
         )
 
         generated_code = code_response.content
@@ -355,11 +357,12 @@ if __name__ == "__main__":
                     Do not tell users how to do it just say you dont know beacuse no data politely
                     There are chart will generated seperately for the question (eg: heatmaps, usage charts) and sent to the user. In the answer Include you can see the chart below or something. If a chart generation error came from result exclude this. 
                     Respond with better fromatting I'll render them  (markdown) always need to split points ,lines using'|' and use ## only in headers. DO not give tables.
-                    All the lines should be seperated with '|' even end of the topics (eg: ##Overall Peformance | **Most api calls**| Most api call... """
+                    All the lines should be seperated with '|' even end of the topics (eg: ##Overall Peformance | **Most api calls**| Most api call... 
+                    Al ways give a proper easy to understand Answer. And you will be provided with  base 64 code  of the chart. Read that and also add a simple chart description as well. Chart will be attached below of youer response in users view"""
                 },
                 {
                     "role": "user",
-                    "content": f"User query: '{user_query}'. Analysis result: {json.dumps(analysis_result)}."
+                    "content": f"User query: '{user_query}'. Analysis result: {json.dumps(analysis_result)}. Chart:{chart_data}"
                 }
             ],
             max_tokens=10000
