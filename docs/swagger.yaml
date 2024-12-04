@@ -1,0 +1,92 @@
+openapi: 3.0.0
+info:
+  title: Azure Data Explorer Query API
+  version: 1.0.0
+  description: API for performing analytics on API data
+
+servers:
+  - url: /api
+    description: API prefix for all endpoints
+
+paths:
+  /tools:
+    post:
+      summary: Select appropriate tools based on user query
+      operationId: selectTools
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToolRequest'
+      responses:
+        '200':
+          description: Successfully selected tools
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  selected_tools:
+                    type: array
+                    items:
+                      type: string
+        '500':
+          description: Internal server error
+
+  /chat:
+    post:
+      summary: Process chat query and return analysis
+      operationId: processChat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: Successfully processed chat query
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  response:
+                    type: string
+                    description: The analysis response in markdown format
+                  chart:
+                    type: object
+                    nullable: true
+                    description: Optional chart data for visualization
+        '500':
+          description: Internal server error
+
+components:
+  schemas:
+    ToolRequest:
+      type: object
+      properties:
+        user_query:
+          type: string
+          description: The user's natural language query
+      required:
+        - user_query
+
+    ChatRequest:
+      type: object
+      properties:
+        user_query:
+          type: string
+          description: The user's natural language query for chat analysis
+      required:
+        - user_query
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+security:
+  - ApiKeyAuth: []
