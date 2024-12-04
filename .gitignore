@@ -20,3 +20,5 @@ venv/
 #runtime files
 analyze_data.py
 chart.png
+adx_connect.py
+organization_overview.py
