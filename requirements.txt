@@ -26,10 +26,9 @@ huggingface-hub==0.26.2
 idna==3.10
 ijson==3.3.0
 Jinja2==3.1.2
-jiter==0.6.1
+jiter==0.6.1    
 kiwisolver==1.4.7
 MarkupSafe==3.0.2
-matplotlib==3.7.1
 msal==1.31.0
 msal-extensions==1.2.0
 numpy==1.24.3
