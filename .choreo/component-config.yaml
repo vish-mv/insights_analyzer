@@ -15,3 +15,5 @@ spec:
       networkVisibility: Public
       # Context (base path) of the API that gets exposed via the endpoint.
       context: /
+      
+      schemaFilePath: docs/swagger.yaml
