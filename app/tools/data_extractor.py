@@ -57,10 +57,10 @@ def extract_data(request: DataExtractionRequest):
                 {
                     "role": "system",
                     "content": """You are a JSON generator that extracts information from user queries.
-                    You must respond with a valid JSON object containing three keys: timeRange, and api.
+                    You must respond with a valid JSON object containing two keys: timeRange, and api.
                     
                     Rules:
-                    - For timeRange: If not specified, use yesterday to today. Always ensure at least 24 hours difference.
+                    - For timeRange: If not specified, use yesterday to today. Always ensure at least 24 hours difference. If theres a prediction requested given at least give one month range past.
                     - For api: Select the most relevant API from the provided list, or use "NoData" if none matches.
                     
                     Response format must be exactly:
