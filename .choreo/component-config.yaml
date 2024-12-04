@@ -6,5 +6,6 @@ spec:
       port: 8000
       type: REST  # Assuming the service type is REST; adjust if needed.
       networkVisibility: Public  # Adjust visibility as needed.
+      context: /  # Set a base path for your API.
       # schemaFilePath is omitted as there's no OpenAPI spec.
     # Define any outbound connections if necessary; otherwise, this section can be omitted.
