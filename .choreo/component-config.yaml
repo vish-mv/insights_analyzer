@@ -3,7 +3,7 @@ kind: ComponentConfig
 spec:
   inbound:
     - name: Insights
-      port: 9000
+      port: 8000
       type: REST
       networkVisibility: Public
       # Remove the /api prefix from the context
