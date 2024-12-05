@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -13,6 +13,14 @@ from app.api.routes import chat
 # Initialize FastAPI app
 settings = get_settings()
 app = FastAPI(title=settings.API_TITLE)
+
+@app.get("/health", status_code=status.HTTP_200_OK)
+async def health_check():
+    return {
+        "status": "healthy",
+        "message": "Application is running"
+    }
+
 
 # Add CORS middleware
 app.add_middleware(
