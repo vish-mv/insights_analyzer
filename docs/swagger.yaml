@@ -101,9 +101,3 @@ components:
           description: The user's natural language query
       required:
         - user_query
-
-  securitySchemes:
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
