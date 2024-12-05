@@ -5,35 +5,10 @@ info:
   description: API for performing analytics on API data
 
 servers:
-  - url: /api
-    description: API prefix for all endpoints
+  - url: /
+    description: Base endpoint
 
 paths:
-  /tools:
-    post:
-      summary: Select appropriate tools based on user query
-      operationId: selectTools
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ToolRequest'
-      responses:
-        '200':
-          description: Successfully selected tools
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  selected_tools:
-                    type: array
-                    items:
-                      type: string
-        '500':
-          description: Internal server error
-
   /chat:
     post:
       summary: Process chat query and return analysis
@@ -62,23 +37,48 @@ paths:
         '500':
           description: Internal server error
 
+  /tools:
+    post:
+      summary: Select appropriate tools based on user query
+      operationId: selectTools
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ToolRequest'
+      responses:
+        '200':
+          description: Successfully selected tools
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  selected_tools:
+                    type: array
+                    items:
+                      type: string
+        '500':
+          description: Internal server error
+
 components:
   schemas:
-    ToolRequest:
-      type: object
-      properties:
-        user_query:
-          type: string
-          description: The user's natural language query
-      required:
-        - user_query
-
     ChatRequest:
       type: object
       properties:
         user_query:
           type: string
           description: The user's natural language query for chat analysis
+      required:
+        - user_query
+
+    ToolRequest:
+      type: object
+      properties:
+        user_query:
+          type: string
+          description: The user's natural language query
       required:
         - user_query
 
