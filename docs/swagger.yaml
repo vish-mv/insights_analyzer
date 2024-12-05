@@ -9,6 +9,26 @@ servers:
     description: Base endpoint
 
 paths:
+  /health:
+      get:
+        summary: Health check endpoint
+        operationId: healthCheck
+        responses:
+          '200':
+            description: Application is healthy
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    status:
+                      type: string
+                      example: "healthy"
+                    message:
+                      type: string
+                      example: "Application is running"
+          '500':
+            description: Internal server error
   /chat:
     post:
       summary: Process chat query and return analysis
