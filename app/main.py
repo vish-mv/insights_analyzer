@@ -9,17 +9,11 @@ from app.config import get_settings
 from app.api.routes import query
 from app.api.routes import tools
 from app.api.routes import chat
+from app.api.routes import health
 
 # Initialize FastAPI app
 settings = get_settings()
 app = FastAPI(title=settings.API_TITLE)
-
-@app.get("/health", status_code=status.HTTP_200_OK)
-async def health_check():
-    return {
-        "status": "healthy",
-        "message": "Application is running"
-    }
 
 
 # Add CORS middleware
@@ -38,3 +32,4 @@ templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 app.include_router(query.router)
 app.include_router(tools.router)
 app.include_router(chat.router)
+app.include_router(health.router)  
