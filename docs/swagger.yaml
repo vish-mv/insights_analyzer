@@ -10,7 +10,7 @@ servers:
 
 paths:
   /health:
-    get:  # Fix: reduce indentation to match other paths
+    get:
       summary: Health check endpoint
       operationId: healthCheck
       responses:
